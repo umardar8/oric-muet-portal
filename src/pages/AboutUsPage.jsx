@@ -1,7 +1,7 @@
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
-import DirectorImage from "../assets/images/Director_img.jpg";
+import DirectorImg from "../assets/images/Director_img.jpg";
 import ViceChancellerImage from "../assets/images/Vice Chanceller Pic.jpg";
 import AboutUsImage from "../assets/images/oric.png";
 
@@ -84,10 +84,10 @@ const AboutUsPage = () => {
     vcDesignation: "Vice Chancellor, MUET Jamshoro",
     vcMessage: "At Mehran University of Engineering and Technology, we are committed to fostering an environment of academic excellence, research innovation, and technological advancement.\n\nOur Office of Research, Innovation and Commercialization (ORIC) stands as a testament to our dedication to bridging the gap between academia and industry.\n\nThrough ORIC, we aim to cultivate a research culture that not only contributes to the global knowledge base but also addresses the pressing challenges facing our nation.\n\nI encourage all our faculty members, students, and researchers to actively engage with ORIC's initiatives and contribute to making Pakistan a hub of innovation and technological progress.",
     vcAbrivation: 'DT',
-    directorName: "Mr. Arif Ali Jalbani",
+    directorName: "Prof. Dr. Sheeraz Ahmed Memon",
     designation: "Director, ORIC MUET Jamshoro",
     directorMessage: "Welcome to the Office of Research, Innovation and Commercialization (ORIC) at Mehran University. ORIC serves as a dynamic bridge between academia, industry, and society — fostering a culture of research excellence, innovation, and entrepreneurial mindset.\n\nOur mission is to support and promote impactful research that addresses national challenges, drives economic development, and enhances societal well-being.\n\nWe are committed to empowering faculty, students, and researchers by providing opportunities for collaboration, funding, commercialization, and capacity-building.\n\nTogether, we aim to transform knowledge into innovation and ideas into enterprise. I invite you all to join hands with ORIC in our pursuit of a knowledge-based, progressive Pakistan.",
-    directorAbrivation : 'AJ'
+    directorAbrivation : 'SM'
   };
 
   const partners = [
@@ -258,7 +258,7 @@ const AboutUsPage = () => {
             >
               <div className="rounded-2xl overflow-hidden shadow-2xl aspect-[4/4] bg-gray-100">
                 <img
-                  src={DirectorImage}
+                  src={DirectorImg}
                   alt="Director ORIC"
                   className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700"
                 />

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import SirArif from '../assets/images/Director_img.jpg';
+import DirectorImg from '../assets/images/Director_img.jpg';
 import { Link } from 'react-router-dom';
 
 const DirectorMsg = () => {
@@ -10,7 +10,7 @@ const DirectorMsg = () => {
   });
 
   const data = {
-    directorName : 'Mr. Arif Ali Jalbani',
+    directorName : 'Prof. Dr. Sheeraz Ahmed Memon',
     designation : 'Director, ORIC MUET Jamshoro',
     message : 'Welcome to the Office of Research, Innovation, and Commercialization at Mehran University. We are committed to fostering an ecosystem where academic research transforms into impactful innovations that drive societal progress and economic growth.'
   }
@@ -108,7 +108,7 @@ const DirectorMsg = () => {
             whileHover={{ scale: 1.02 }}
           >
             <motion.img
-              src={SirArif}
+              src={DirectorImg}
               alt="Director"
               className="w-full h-full object-cover"
               initial={{ scale: 1.1 }}

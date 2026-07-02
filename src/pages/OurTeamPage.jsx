@@ -3,6 +3,7 @@ import { FiMail, FiPhone, FiSmartphone, FiPrinter, FiUser, FiBriefcase, FiGlobe 
 import { motion } from 'framer-motion';
 import SirTanveer from '../assets/images/sirtanveer.jpg';
 import ArifAli from '../assets/images/arif.jpg';
+import DirectorImg from '../assets/images/Director_img.jpg';
 import SyedShah from '../assets/images/alishah.jpg';
 import TariqueAhmed from '../assets/images/tarique.jpg';
 import SaeedMemon from '../assets/images/saeedahmed.jpg';
@@ -15,6 +16,14 @@ const OurTeam = () => {
   
   const navigate=useNavigate()
   const teamMembers = [
+    {
+      name: "Mr. ARIF ALI JALBANI",
+      position: "Manager, Research Operations & Development",
+      emails: ["arif.ali@admin.muet.edu.pk", "arifalieiu@gmail.com"],
+      phone: "+92 21 2772250-73 Ext. 6503",
+      mobile: "+92 316 8832427",
+      image: ArifAli
+    },
     {
       name: "DR. SYED MUHAMMAD ALI SHAH",
       position: "Manager, University Industry Linkages & Technology Transfer",
@@ -141,19 +150,19 @@ const OurTeam = () => {
             <div className="md:flex">              <div className="md:w-1/3 relative">
                 <img
                   className="h-full w-full object-cover"
-                  src={ArifAli}
-                  alt="Arif Ali Jalbani"
+                  src={DirectorImg}
+                  alt="Prof. Dr. Sheeraz Ahmed Memon"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-8">
                   <div>
-                    <h3 className="text-2xl font-bold text-white">ARIF ALI JALBANI</h3>
+                    <h3 className="text-2xl font-bold text-white">Prof. Dr. Sheeraz Ahmed Memon</h3>
                     <p className="text-teal-300 font-medium">DIRECTOR</p>
                   </div>
                 </div>
               </div>
 
               <div className="md:w-2/3 p-8 md:p-10">                <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900">ARIF ALI JALBANI</h2>
+                  <h2 className="text-3xl font-bold text-gray-900">Prof. Dr. Sheeraz Ahmed Memon</h2>
                   <p className="text-blue-600 text-xl font-semibold mb-4">DIRECTOR</p>
                   <p className="text-gray-600">
                     Office of Research, Innovation & Commercialization (ORIC)<br />
@@ -168,7 +177,7 @@ const OurTeam = () => {
                     </div>                    <div>
                       <p className="text-sm text-gray-500 font-medium">Official Email</p>
                       <p className="text-gray-800">dir.oric@admin.muet.edu.pk</p>
-                      <p className="text-gray-800">arif.ali@admin.muet.edu.pk</p>
+                      {/* <p className="text-gray-800">arif.ali@admin.muet.edu.pk</p> */}
                     </div>
                   </div>
 
@@ -214,6 +223,8 @@ const OurTeam = () => {
           </div>
         </div>
       </section>
+
+      
 
       {/* Team Members Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
