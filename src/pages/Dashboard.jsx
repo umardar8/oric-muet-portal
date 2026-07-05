@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { CheckCircle2, Clock, Download, ExternalLink, Save, Send, Upload, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
-import { FALLBACK_OPPORTUNITIES, PORTAL_CONFIG, PORTAL_TYPES } from "../portal/portalConfig";
+import { FALLBACK_OPPORTUNITIES, PLACEHOLDER_IMAGES, PORTAL_CONFIG, PORTAL_TYPES } from "../portal/portalConfig";
 import {
   getListings,
   getPagedUsers,
@@ -13,13 +13,52 @@ import {
   getResearchProfiles,
   getSubmissions,
   savePost,
+  saveListing,
   saveResearchProfile,
   saveSubmission,
   setFeatureFlag,
+  updateListingImage,
   updateSubmissionStatus,
   updateUserStatus,
 } from "../portal/portalStorage";
 import "./Dashboard.css";
+
+function readImageFile(file, callback) {
+  if (!file) return;
+  if (!file.type?.startsWith("image/")) {
+    toast.error("Please choose a valid image file.");
+    return;
+  }
+  if (file.size > 3 * 1024 * 1024) {
+    toast.error("Please choose an image smaller than 3 MB.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => callback(reader.result);
+  reader.readAsDataURL(file);
+}
+
+function getOpportunityImage(item) {
+  return item.image || item.imageUrl || item.image_url || PLACEHOLDER_IMAGES.opportunity;
+}
+
+function getListingImage(listing) {
+  const kind = String(listing.kind || "").toLowerCase();
+  if (listing.image || listing.imageUrl || listing.image_url) return listing.image || listing.imageUrl || listing.image_url;
+  if (kind.includes("fyp")) return PLACEHOLDER_IMAGES.fyp;
+  if (kind.includes("business")) return PLACEHOLDER_IMAGES.business;
+  return PLACEHOLDER_IMAGES.startup;
+}
+
+function getProfileImage(profile) {
+  if (profile.photo || profile.image || profile.photoUrl || profile.photo_url) {
+    return profile.photo || profile.image || profile.photoUrl || profile.photo_url;
+  }
+  const gender = String(profile.gender || "").toLowerCase();
+  if (gender === "female") return PLACEHOLDER_IMAGES.femaleProfile;
+  if (gender === "male") return PLACEHOLDER_IMAGES.maleProfile;
+  return PLACEHOLDER_IMAGES.neutralProfile;
+}
 
 export default function Dashboard() {
   const { featureKey } = useParams();
@@ -188,6 +227,7 @@ function SimpleCards({ feature, items, tag }) {
       <div className="portal-board-grid">
         {items.map((item) => (
           <article className="portal-detail-card" key={item.id}>
+            <img className="portal-card-image" src={getOpportunityImage(item)} alt="" loading="lazy" />
             <span>{tag}</span>
             <h3>{item.title}</h3>
             <p>{item.body}</p>
@@ -202,6 +242,7 @@ function SimpleCards({ feature, items, tag }) {
 function OpportunityCard({ post, onView }) {
   return (
     <article className="portal-detail-card">
+      <img className="portal-card-image" src={getOpportunityImage(post)} alt="" loading="lazy" />
       <span>{post.status}</span>
       <h3>{post.title}</h3>
       <p>{post.body}</p>
@@ -219,6 +260,7 @@ function OpportunityDetails({ post, onClose }) {
           <span>{post.type}</span>
           <button onClick={onClose}>Close</button>
         </div>
+        <img className="portal-modal-image" src={getOpportunityImage(post)} alt="" />
         <h2>{post.title}</h2>
         <p>{post.body}</p>
         <dl>
@@ -295,7 +337,20 @@ function StructuredSubmission({ user, onChange, featureKey, title, description, 
       actorId: user.id,
       actorName: user.name,
       actorEmail: user.email,
+      image: form.image,
     });
+    if (featureKey === "fyp-listing") {
+      saveListing({
+        kind: "FYP",
+        title: form.projectTitle || title,
+        owner: user.name,
+        ownerEmail: user.email,
+        department: user.department,
+        summary: form.details,
+        needs: "Admin review and industry matching",
+        image: form.image,
+      });
+    }
     setForm({});
     toast.success("Submitted successfully.");
     onChange();
@@ -310,6 +365,10 @@ function StructuredSubmission({ user, onChange, featureKey, title, description, 
           ))}
         </div>
         <label>{textAreaLabel}<textarea className="portal-input" rows="5" value={form.details || ""} onChange={(e) => setForm({ ...form, details: e.target.value })} required /></label>
+        <label>Listing image
+          <input className="portal-input" type="file" accept="image/*" onChange={(e) => readImageFile(e.target.files?.[0], (image) => setForm({ ...form, image }))} />
+        </label>
+        {form.image && <img className="portal-upload-preview" src={form.image} alt="Submission preview" />}
         <button className="portal-primary" type="submit"><Send size={16} /> Submit</button>
       </form>
     </div>
@@ -371,7 +430,7 @@ function MySubmissions({ user }) {
 }
 
 function SubmissionFeature({ user, feature, onChange }) {
-  const [form, setForm] = useState({ title: "", summary: "", details: "", partnerName: "", budget: "", remarks: "" });
+  const [form, setForm] = useState({ title: "", summary: "", details: "", partnerName: "", budget: "", remarks: "", image: "", gender: "" });
 
   function submit(event) {
     event.preventDefault();
@@ -395,10 +454,12 @@ function SubmissionFeature({ user, feature, onChange }) {
         bio: form.details,
         orcid: form.partnerName,
         scholar: form.budget,
+        photo: form.image || user.photo,
+        gender: form.gender,
       });
     }
 
-    setForm({ title: "", summary: "", details: "", partnerName: "", budget: "", remarks: "" });
+    setForm({ title: "", summary: "", details: "", partnerName: "", budget: "", remarks: "", image: "", gender: "" });
     toast.success("Submission saved.");
     onChange();
   }
@@ -429,6 +490,25 @@ function SubmissionFeature({ user, feature, onChange }) {
           Detailed description
           <textarea className="portal-input" rows="5" value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} required />
         </label>
+        {feature.key === "faculty-profile" && (
+          <>
+            <div className="portal-form-grid">
+              <label>
+                Gender
+                <select className="portal-input" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+                  <option value="">Prefer not to say</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                </select>
+              </label>
+              <label>
+                Profile image
+                <input className="portal-input" type="file" accept="image/*" onChange={(e) => readImageFile(e.target.files?.[0], (image) => setForm({ ...form, image }))} />
+              </label>
+            </div>
+            {form.image && <img className="portal-upload-preview" src={form.image} alt="Research profile preview" />}
+          </>
+        )}
         <button className="portal-primary" type="submit"><Send size={16} /> Submit</button>
       </form>
     </div>
@@ -442,6 +522,7 @@ function BrowseListings() {
       <div className="portal-feature-grid">
         {getListings().map((listing) => (
           <article className="portal-feature-card" key={listing.id}>
+            <img className="portal-card-image" src={getListingImage(listing)} alt="" loading="lazy" />
             <div className="portal-feature-card__top">
               <span>{listing.kind}</span>
               <span>{listing.status}</span>
@@ -464,6 +545,7 @@ function ResearchNetwork() {
       <div className="portal-feature-grid">
         {getResearchProfiles().map((profile) => (
           <article className="portal-feature-card" key={profile.id}>
+            <img className="portal-profile-image" src={getProfileImage(profile)} alt="" loading="lazy" />
             <h3>{profile.name}</h3>
             <p>{profile.bio}</p>
             <small>{profile.department}</small>
@@ -558,7 +640,7 @@ function UserManagement({ onChange }) {
 }
 
 function PublishingPanel({ onChange }) {
-  const [post, setPost] = useState({ type: "Announcement", title: "", body: "", meta: "", applyLink: "", audience: ["undergraduate"] });
+  const [post, setPost] = useState({ type: "Announcement", title: "", body: "", meta: "", applyLink: "", image: "", audience: ["undergraduate"] });
   const flags = getPortalFeatures(PORTAL_TYPES.ADMIN).filter((feature) => ["startup-seed", "ip-registration", "project-monitoring", "mentorship"].includes(feature.key));
 
   function toggleAudience(portalType) {
@@ -573,7 +655,7 @@ function PublishingPanel({ onChange }) {
   function publish(event) {
     event.preventDefault();
     savePost(post);
-    setPost({ type: "Announcement", title: "", body: "", meta: "", applyLink: "", audience: ["undergraduate"] });
+    setPost({ type: "Announcement", title: "", body: "", meta: "", applyLink: "", image: "", audience: ["undergraduate"] });
     toast.success("Published successfully.");
     onChange();
   }
@@ -601,6 +683,10 @@ function PublishingPanel({ onChange }) {
           <label>Meta / deadline / file note<input className="portal-input" value={post.meta} onChange={(e) => setPost({ ...post, meta: e.target.value })} /></label>
           <label>Apply link<input className="portal-input" value={post.applyLink} onChange={(e) => setPost({ ...post, applyLink: e.target.value })} placeholder="https://..." /></label>
         </div>
+        <label>Card image
+          <input className="portal-input" type="file" accept="image/*" onChange={(e) => readImageFile(e.target.files?.[0], (image) => setPost({ ...post, image }))} />
+        </label>
+        {post.image && <img className="portal-upload-preview" src={post.image} alt="Post preview" />}
         <div className="portal-checkboxes">
           {Object.values(PORTAL_TYPES).filter((type) => type !== PORTAL_TYPES.ADMIN).map((type) => (
             <label key={type}><input type="checkbox" checked={post.audience.includes(type)} onChange={() => toggleAudience(type)} /> {type}</label>
@@ -753,9 +839,39 @@ function ResourceLibrary({ embedded = false }) {
 }
 
 function IncubationApplication({ user, onChange }) {
+  const startupListing = getListings().find((listing) =>
+    String(listing.title || "").toLowerCase() === String(user.startupName || user.name || "").toLowerCase()
+    || String(listing.owner || "").toLowerCase() === String(user.name || "").toLowerCase()
+    || String(listing.ownerEmail || "").toLowerCase() === String(user.email || "").toLowerCase(),
+  );
+
+  function changeStartupImage(file) {
+    if (!startupListing) {
+      toast.error("No approved startup listing is linked with this account yet.");
+      return;
+    }
+    readImageFile(file, (image) => {
+      updateListingImage(startupListing.id, image);
+      toast.success("Startup listing image updated.");
+      onChange();
+    });
+  }
+
   return (
     <div className="portal-page">
       <FeatureHeader feature={{ label: "Incubation", description: "Apply for MUET BIC incubation support, mentorship, trainings, and facilities." }} />
+      <section className="portal-form-card portal-startup-media">
+        <img src={startupListing ? getListingImage(startupListing) : PLACEHOLDER_IMAGES.startup} alt="" />
+        <div>
+          <p className="portal-eyebrow">Industry Listing Image</p>
+          <h3>{startupListing?.title || user.startupName || "Startup profile"}</h3>
+          <p>This image appears on your approved startup card when industry partners browse listings.</p>
+          <label className="portal-file-action">
+            <Upload size={16} /> Change Image
+            <input type="file" accept="image/*" onChange={(event) => changeStartupImage(event.target.files?.[0])} />
+          </label>
+        </div>
+      </section>
       <form className="portal-form-card" onSubmit={(event) => {
         event.preventDefault();
         saveSubmission({ title: `Incubation application: ${user.name}`, summary: event.currentTarget.stage.value, details: event.currentTarget.support.value, featureKey: "incubation-application", portalType: user.portalType, actorId: user.id, actorName: user.name });

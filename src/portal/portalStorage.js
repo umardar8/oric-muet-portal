@@ -78,6 +78,28 @@ export function getListings() {
   return SAMPLE_LISTINGS;
 }
 
+export function saveListing(listing) {
+  const listings = getListings();
+  const next = [{ id: Date.now(), status: "Pending", ...listing }, ...listings];
+  writeJson(LISTINGS_KEY, next);
+  return next;
+}
+
+export function updateListingImage(listingId, image) {
+  const listings = getListings();
+  const next = listings.map((listing) =>
+    String(listing.id) === String(listingId) ? { ...listing, image } : listing,
+  );
+  writeJson(LISTINGS_KEY, next);
+  addNotification({
+    type: "listing-image",
+    title: "Listing image updated",
+    body: `Listing #${listingId} image was updated.`,
+    portalType: PORTAL_TYPES.STARTUP,
+  });
+  return next;
+}
+
 export function getResearchProfiles() {
   const profiles = readJson(PROFILES_KEY, null);
   if (profiles) return profiles;

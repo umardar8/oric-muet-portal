@@ -95,6 +95,34 @@ export const DEFAULT_CREDENTIALS = {
   startup: { username: "startup.founder", password: "Startup@12345" },
 };
 
+const makePlaceholder = (title, accent = "#1d773b", tint = "#eaf7ef") =>
+  `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+      <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="${tint}"/>
+          <stop offset="1" stop-color="#ffffff"/>
+        </linearGradient>
+      </defs>
+      <rect width="960" height="540" rx="34" fill="url(#bg)"/>
+      <circle cx="780" cy="110" r="92" fill="${accent}" opacity=".12"/>
+      <circle cx="150" cy="410" r="120" fill="${accent}" opacity=".10"/>
+      <path d="M222 340h516l-98-120-88 92-70-78-86 106-52-60-122 60z" fill="${accent}" opacity=".24"/>
+      <rect x="220" y="165" width="520" height="210" rx="24" fill="none" stroke="${accent}" stroke-width="16" opacity=".48"/>
+      <text x="480" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#102b53">${title}</text>
+    </svg>
+  `)}`;
+
+export const PLACEHOLDER_IMAGES = {
+  opportunity: makePlaceholder("ORIC Opportunity", "#1d773b", "#eef8f1"),
+  startup: makePlaceholder("Startup Listing", "#c07800", "#fff7e8"),
+  fyp: makePlaceholder("FYP Listing", "#0d6b92", "#edf9fd"),
+  business: makePlaceholder("Business Idea", "#7c3aed", "#f5f1ff"),
+  maleProfile: makePlaceholder("Researcher Profile", "#0d2e5c", "#eef4fb"),
+  femaleProfile: makePlaceholder("Researcher Profile", "#b83280", "#fff0f8"),
+  neutralProfile: makePlaceholder("Researcher Profile", "#667085", "#f5f7fb"),
+};
+
 const sharedUserItems = [
   {
     key: "feedback",
@@ -288,13 +316,14 @@ export const FALLBACK_OPPORTUNITIES = {
 };
 
 export const SAMPLE_LISTINGS = [
-  { id: "st-1", kind: "Startup", title: "AquaSense IoT", owner: "Nida Memon", department: "Electronic Engineering", summary: "Low-cost water quality monitoring for rural Sindh.", status: "Approved", needs: "Seed investment and pilot deployment partner" },
-  { id: "fyp-1", kind: "FYP", title: "AI Crop Disease Detector", owner: "Team Software Engineering", department: "Software Engineering", summary: "Mobile-first plant disease detection using lightweight ML.", status: "Approved", needs: "Dataset access and commercialization support" },
-  { id: "biz-1", kind: "Business Idea", title: "Campus Circular Marketplace", owner: "Ali Shah", department: "Business Administration", summary: "Verified marketplace for student services and reusable academic materials.", status: "Approved", needs: "Mentorship and investor validation" },
+  { id: "st-1", kind: "Startup", title: "AquaSense IoT", owner: "Nida Memon", department: "Electronic Engineering", summary: "Low-cost water quality monitoring for rural Sindh.", status: "Approved", needs: "Seed investment and pilot deployment partner", image: PLACEHOLDER_IMAGES.startup },
+  { id: "fyp-1", kind: "FYP", title: "AI Crop Disease Detector", owner: "Team Software Engineering", department: "Software Engineering", summary: "Mobile-first plant disease detection using lightweight ML.", status: "Approved", needs: "Dataset access and commercialization support", image: PLACEHOLDER_IMAGES.fyp },
+  { id: "biz-1", kind: "Business Idea", title: "Campus Circular Marketplace", owner: "Ali Shah", department: "Business Administration", summary: "Verified marketplace for student services and reusable academic materials.", status: "Approved", needs: "Mentorship and investor validation", image: PLACEHOLDER_IMAGES.business },
+  { id: "st-demo", kind: "Startup", title: "SindhuGPT", owner: "Ghulam Hussain", ownerEmail: "23sw@students.muet.edu.pk", department: "Software Engineering", summary: "A regional AI assistant for Sindhi knowledge access, education, and university services.", status: "Approved", needs: "Cloud credits, pilot customers, and investor introductions", image: PLACEHOLDER_IMAGES.startup },
 ];
 
 export const SAMPLE_RESEARCH_PROFILES = [
-  { id: 1, name: "Dr. Farah Naz", department: "Electrical Engineering", interests: "Smart grids, renewable energy, optimization", orcid: "0000-0002-1289-4312", scholar: "https://scholar.google.com", bio: "Researcher focused on resilient energy systems and industry collaboration." },
-  { id: 2, name: "Dr. Umar Farooq", department: "Software Engineering", interests: "Machine learning, data platforms, civic technology", orcid: "0000-0001-7821-1150", scholar: "https://scholar.google.com", bio: "Works on applied ML and digital systems for public-sector research problems." },
-  { id: 3, name: "Prof. Nadia Baloch", department: "Telecommunication Engineering", interests: "Wireless networks, IoT, edge computing", orcid: "0000-0003-3367-8821", scholar: "https://scholar.google.com", bio: "Leads IoT-enabled research projects with agriculture and industry partners." },
+  { id: 1, name: "Dr. Farah Naz", gender: "female", department: "Electrical Engineering", interests: "Smart grids, renewable energy, optimization", orcid: "0000-0002-1289-4312", scholar: "https://scholar.google.com", bio: "Researcher focused on resilient energy systems and industry collaboration." },
+  { id: 2, name: "Dr. Umar Farooq", gender: "male", department: "Software Engineering", interests: "Machine learning, data platforms, civic technology", orcid: "0000-0001-7821-1150", scholar: "https://scholar.google.com", bio: "Works on applied ML and digital systems for public-sector research problems." },
+  { id: 3, name: "Prof. Nadia Baloch", gender: "female", department: "Telecommunication Engineering", interests: "Wireless networks, IoT, edge computing", orcid: "0000-0003-3367-8821", scholar: "https://scholar.google.com", bio: "Leads IoT-enabled research projects with agriculture and industry partners." },
 ];

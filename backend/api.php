@@ -83,16 +83,51 @@ try {
         $portalType = $_GET['portal_type'] ?? null;
         if ($portalType) {
             $stmt = db()->prepare(
-                'SELECT p.*, p.apply_link AS applyLink FROM portal_posts p
+                'SELECT p.*, p.apply_link AS applyLink, p.image_url AS image FROM portal_posts p
                  INNER JOIN portal_post_audiences a ON a.post_id = p.id
                  WHERE a.portal_type = :portal_type AND p.status = "open"
                  ORDER BY p.created_at DESC'
             );
             $stmt->execute([':portal_type' => $portalType]);
         } else {
-            $stmt = db()->query('SELECT *, apply_link AS applyLink FROM portal_posts ORDER BY created_at DESC');
+            $stmt = db()->query('SELECT *, apply_link AS applyLink, image_url AS image FROM portal_posts ORDER BY created_at DESC');
         }
         json_response(['success' => true, 'posts' => $stmt->fetchAll()]);
+    }
+
+    if ($method === 'POST' && $resource === 'upload-image') {
+        if (empty($_FILES['image']) || !is_uploaded_file($_FILES['image']['tmp_name'])) {
+            json_response(['success' => false, 'error' => 'No image file was uploaded.'], 422);
+        }
+
+        $file = $_FILES['image'];
+        if ($file['size'] > 3 * 1024 * 1024) {
+            json_response(['success' => false, 'error' => 'Image must be smaller than 3 MB.'], 422);
+        }
+
+        $mime = mime_content_type($file['tmp_name']);
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+        ];
+        if (!isset($extensions[$mime])) {
+            json_response(['success' => false, 'error' => 'Only JPG, PNG, WEBP, and GIF images are allowed.'], 422);
+        }
+
+        $uploadDir = __DIR__ . '/uploads';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filename = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
+        $target = $uploadDir . '/' . $filename;
+        if (!move_uploaded_file($file['tmp_name'], $target)) {
+            json_response(['success' => false, 'error' => 'Unable to save uploaded image.'], 500);
+        }
+
+        json_response(['success' => true, 'url' => 'backend/uploads/' . $filename], 201);
     }
 
     if ($method === 'POST' && $resource === 'posts') {
@@ -100,8 +135,16 @@ try {
         require_fields($data, ['type', 'title', 'body', 'audience']);
 
         db()->beginTransaction();
-        $stmt = db()->prepare('INSERT INTO portal_posts (type, title, body, meta, apply_link, created_by) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$data['type'], $data['title'], $data['body'], $data['meta'] ?? null, $data['applyLink'] ?? $data['apply_link'] ?? null, $data['created_by'] ?? null]);
+        $stmt = db()->prepare('INSERT INTO portal_posts (type, title, body, meta, apply_link, image_url, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([
+            $data['type'],
+            $data['title'],
+            $data['body'],
+            $data['meta'] ?? null,
+            $data['applyLink'] ?? $data['apply_link'] ?? null,
+            $data['image'] ?? $data['imageUrl'] ?? $data['image_url'] ?? null,
+            $data['created_by'] ?? null,
+        ]);
         $postId = (int) db()->lastInsertId();
 
         $audienceStmt = db()->prepare('INSERT INTO portal_post_audiences (post_id, portal_type) VALUES (?, ?)');
@@ -118,8 +161,8 @@ try {
         require_fields($data, ['user_id', 'feature_key', 'portal_type', 'title']);
 
         $stmt = db()->prepare(
-            'INSERT INTO submissions (user_id, feature_key, portal_type, title, summary, details)
-             VALUES (:user_id, :feature_key, :portal_type, :title, :summary, :details)'
+            'INSERT INTO submissions (user_id, feature_key, portal_type, title, summary, details, image_url)
+             VALUES (:user_id, :feature_key, :portal_type, :title, :summary, :details, :image_url)'
         );
         $stmt->execute([
             ':user_id' => $data['user_id'],
@@ -128,6 +171,7 @@ try {
             ':title' => $data['title'],
             ':summary' => $data['summary'] ?? null,
             ':details' => $data['details'] ?? null,
+            ':image_url' => $data['image'] ?? $data['imageUrl'] ?? $data['image_url'] ?? null,
         ]);
 
         json_response(['success' => true, 'id' => db()->lastInsertId()], 201);
