@@ -133,7 +133,7 @@ export default function SignUp() {
           </div>
 
           <div className="mt-10 rounded-md border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Detected portal</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Portal Assigned</p>
             <p className="mt-2 text-lg font-semibold text-white">
               {inferredPortal ? portalLabels[inferredPortal] : "Enter your official email"}
             </p>
@@ -153,17 +153,17 @@ export default function SignUp() {
           {step === 1 && (
             <div className="space-y-4">
               <Field icon={User} label="Full name">
-                <input name="fullName" value={form.fullName} onChange={updateField} placeholder="Umar Farooq" className="portal-input" />
+                <input name="fullName" value={form.fullName} onChange={updateField} placeholder="enter your first name & last name" className="portal-input" />
               </Field>
 
               <Field icon={Mail} label="Official email">
-                <input name="email" value={form.email} onChange={updateField} type="email" placeholder="23sw@students.muet.edu.pk" className="portal-input" />
+                <input name="email" value={form.email} onChange={updateField} type="email" placeholder="enter your official university email" className="portal-input" />
               </Field>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Field icon={Lock} label="Password">
                   <div className="relative">
-                    <input name="password" value={form.password} onChange={updateField} type={showPassword ? "text" : "password"} className="portal-input pr-10" />
+                    <input name="password" value={form.password} onChange={updateField} type={showPassword ? "text" : "password"} placeholder="enter password" className="portal-input pr-10" />
                     <button type="button" className="absolute right-3 top-3 text-slate-500" onClick={() => setShowPassword((value) => !value)}>
                       {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                     </button>
@@ -172,7 +172,7 @@ export default function SignUp() {
 
                 <Field icon={Lock} label="Confirm password">
                   <div className="relative">
-                    <input name="confirmPassword" value={form.confirmPassword} onChange={updateField} type={showConfirm ? "text" : "password"} className="portal-input pr-10" />
+                    <input name="confirmPassword" value={form.confirmPassword} onChange={updateField} type={showConfirm ? "text" : "password"} placeholder="re-enter password" className="portal-input pr-10" />
                     <button type="button" className="absolute right-3 top-3 text-slate-500" onClick={() => setShowConfirm((value) => !value)}>
                       {showConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
                     </button>
@@ -184,7 +184,7 @@ export default function SignUp() {
                 Password strength: <strong>{score}/5</strong>. Use 8+ characters with uppercase, lowercase, number, and special character.
               </div>
 
-              <button type="button" disabled={!canContinue()} onClick={() => setStep(2)} className="portal-primary w-full disabled:cursor-not-allowed disabled:bg-slate-300">
+              <button type="button" disabled={!canContinue()} onClick={() => setStep(2)} className="portal-primary w-full bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300">
                 Continue <ArrowRight size={16} />
               </button>
             </div>

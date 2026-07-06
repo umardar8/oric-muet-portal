@@ -1,4 +1,5 @@
 import { DEFAULT_CREDENTIALS, DEPARTMENT_CODES, PORTAL_TYPES } from "./portalConfig";
+import { apiSavePortalState } from "./apiClient";
 
 const USERS_KEY = "oricPortalUsers";
 const SESSION_KEY = "oricPortalSession";
@@ -58,6 +59,7 @@ export function readUsers() {
 
 export function writeUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  apiSavePortalState(USERS_KEY, users).catch(() => {});
 }
 
 export function readSession() {
@@ -92,6 +94,7 @@ export function addNotification(notification) {
     ...existing,
   ];
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
+  apiSavePortalState(NOTIFICATIONS_KEY, next).catch(() => {});
 }
 
 export function readNotifications() {

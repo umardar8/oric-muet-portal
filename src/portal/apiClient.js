@@ -46,6 +46,18 @@ export async function apiLogin(identifier, password) {
   });
 }
 
+export async function apiGetPortalState(key = "") {
+  const suffix = key ? `/state?key=${encodeURIComponent(key)}` : "/state";
+  return request(suffix);
+}
+
+export async function apiSavePortalState(key, value) {
+  return request("/state", {
+    method: "POST",
+    body: JSON.stringify({ key, value }),
+  });
+}
+
 export function isNetworkApiError(error) {
   return !error.status || (import.meta.env.DEV && error.status === 404);
 }

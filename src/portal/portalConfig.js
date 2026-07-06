@@ -1,7 +1,6 @@
 import {
   BarChart3,
   Briefcase,
-  Building2,
   CalendarClock,
   ClipboardCheck,
   Download,
@@ -10,6 +9,7 @@ import {
   FlaskConical,
   GraduationCap,
   Handshake,
+  LayoutDashboard,
   Lightbulb,
   LineChart,
   Megaphone,
@@ -87,40 +87,68 @@ export const DEPARTMENT_CODES = {
 };
 
 export const DEFAULT_CREDENTIALS = {
-  admin: { username: "oric.admin", password: "Admin@12345" },
-  undergraduate: { username: "23sw@students.muet.edu.pk", password: "Student@12345" },
-  postgraduate: { username: "23MEsw@students.muet.edu.pk", password: "Postgrad@12345" },
-  faculty: { username: "umar.farooq@faculty.muet.edu.pk", password: "Faculty@12345" },
-  industry: { username: "industry.partner", password: "Partner@12345" },
-  startup: { username: "startup.founder", password: "Startup@12345" },
+  admin: { username: "oric.admin", password: "Password@12345" },
+  undergraduate: { username: "26sw00@students.muet.edu.pk", password: "Password@12345" },
+  postgraduate: { username: "26mese00@students.muet.edu.pk", password: "Password@12345" },
+  faculty: { username: "umar.farooq@faculty.muet.edu.pk", password: "Password@12345" },
+  industry: { username: "industry.partner", password: "Password@12345" },
+  startup: { username: "startup.founder", password: "Password@12345" },
 };
 
-const makePlaceholder = (title, accent = "#1d773b", tint = "#eaf7ef") =>
+const makePlaceholder = (accent = "#0878d7", tint = "#eaf4ff") =>
   `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
       <defs>
         <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0" stop-color="${tint}"/>
-          <stop offset="1" stop-color="#ffffff"/>
+          <stop offset=".58" stop-color="#ffffff"/>
+          <stop offset="1" stop-color="#d9edff"/>
+        </linearGradient>
+        <linearGradient id="wave" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="${accent}" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#0a2f63" stop-opacity=".82"/>
         </linearGradient>
       </defs>
       <rect width="960" height="540" rx="34" fill="url(#bg)"/>
-      <circle cx="780" cy="110" r="92" fill="${accent}" opacity=".12"/>
-      <circle cx="150" cy="410" r="120" fill="${accent}" opacity=".10"/>
-      <path d="M222 340h516l-98-120-88 92-70-78-86 106-52-60-122 60z" fill="${accent}" opacity=".24"/>
-      <rect x="220" y="165" width="520" height="210" rx="24" fill="none" stroke="${accent}" stroke-width="16" opacity=".48"/>
-      <text x="480" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#102b53">${title}</text>
+      <circle cx="785" cy="105" r="118" fill="${accent}" opacity=".14"/>
+      <circle cx="166" cy="418" r="142" fill="#0a2f63" opacity=".10"/>
+      <path d="M0 368c108-54 190-50 286 2 116 62 202 62 320 0 116-60 224-62 354-4v174H0z" fill="url(#wave)" opacity=".88"/>
+      <path d="M86 270c76-58 172-86 284-84 150 3 253 72 396 40 48-10 88-28 124-50v112c-80 49-170 69-272 46-150-34-242-91-394-47-54 16-100 42-138 76z" fill="${accent}" opacity=".18"/>
+      <rect x="114" y="92" width="116" height="116" rx="28" fill="#ffffff" opacity=".72"/>
+      <rect x="738" y="314" width="108" height="108" rx="28" fill="#ffffff" opacity=".52"/>
+      <path d="M142 172h60M172 142v60" stroke="${accent}" stroke-width="18" stroke-linecap="round" opacity=".76"/>
+    </svg>
+  `)}`;
+
+const makeLogo = (label, accent = "#0878d7") =>
+  `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+      <rect width="160" height="160" rx="28" fill="#ffffff"/>
+      <rect x="10" y="10" width="140" height="140" rx="24" fill="#eaf4ff"/>
+      <circle cx="80" cy="62" r="34" fill="${accent}" opacity=".18"/>
+      <path d="M48 88h64l-12 28H60z" fill="${accent}" opacity=".86"/>
+      <path d="M44 72l36-24 36 24-36 24z" fill="#0a2f63"/>
+      <text x="80" y="134" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="${accent}">${label}</text>
     </svg>
   `)}`;
 
 export const PLACEHOLDER_IMAGES = {
-  opportunity: makePlaceholder("ORIC Opportunity", "#1d773b", "#eef8f1"),
-  startup: makePlaceholder("Startup Listing", "#c07800", "#fff7e8"),
-  fyp: makePlaceholder("FYP Listing", "#0d6b92", "#edf9fd"),
-  business: makePlaceholder("Business Idea", "#7c3aed", "#f5f1ff"),
-  maleProfile: makePlaceholder("Researcher Profile", "#0d2e5c", "#eef4fb"),
-  femaleProfile: makePlaceholder("Researcher Profile", "#b83280", "#fff0f8"),
-  neutralProfile: makePlaceholder("Researcher Profile", "#667085", "#f5f7fb"),
+  opportunity: makePlaceholder("#0878d7", "#eaf4ff"),
+  startup: makePlaceholder("#0a72c7", "#eaf4ff"),
+  fyp: makePlaceholder("#0b8bdc", "#edf8ff"),
+  business: makePlaceholder("#0759ad", "#eaf4ff"),
+  maleProfile: makePlaceholder("#0a2f63", "#eef6ff"),
+  femaleProfile: makePlaceholder("#0878d7", "#eef6ff"),
+  neutralProfile: makePlaceholder("#426b9a", "#f1f7ff"),
+};
+
+export const SCHOLARSHIP_LOGOS = {
+  needMerit: makeLogo("NM"),
+  saef: makeLogo("SE"),
+  poverty: makeLogo("FA"),
+  citizen: makeLogo("CF"),
+  zakat: makeLogo("ZK"),
+  usaid: makeLogo("US"),
 };
 
 const sharedUserItems = [
@@ -149,22 +177,21 @@ export const PORTAL_CONFIG = {
     title: "Undergraduate Student Portal",
     shortTitle: "Undergraduate",
     badge: "Student",
-    color: "green",
+    color: "blue",
     description:
-      "Internships, industrial visits, scholarships, FYP listings, startup applications, activities, feedback, and downloads for undergraduate students.",
+      "Opportunities, events, scholarships, FYP listings, startup applications, feedback, and downloads for undergraduate students.",
     stats: [
-      { label: "Internships", value: 18, hint: "Active opportunities", icon: Briefcase },
+      { label: "Opportunities", value: 18, hint: "Active calls", icon: LayoutDashboard },
       { label: "FYPs Listed", value: 42, hint: "Student submissions", icon: Lightbulb },
       { label: "Scholarships", value: 9, hint: "Currently open", icon: GraduationCap },
-      { label: "Events", value: 12, hint: "Upcoming activities", icon: CalendarClock },
+      { label: "Upcoming Events", value: 12, hint: "Upcoming events", icon: CalendarClock },
     ],
     features: [
-      { key: "internships", label: "Internships", icon: Briefcase, description: "Browse internship opportunities posted by ORIC and industry partners.", enabled: true, category: "Opportunities" },
-      { key: "industrial-visits", label: "Visits", icon: Building2, description: "View upcoming industrial visits and participation calls.", enabled: true, category: "Opportunities" },
-      { key: "activities", label: "Activities", icon: Sparkles, description: "Discover ORIC and BIC activities that support innovation and career growth.", enabled: true, category: "Opportunities" },
+      { key: "internships", label: "Opportunities", icon: Briefcase, description: "Browse internships, workshops, bootcamps, industrial visits, and other student opportunities posted by ORIC and industry partners.", enabled: true, category: "Opportunities" },
+      { key: "activities", label: "Upcoming Events", icon: Sparkles, description: "Discover competitions, talks, job fairs, academic events, entertainment, and other upcoming ORIC events.", enabled: true, category: "Events" },
       { key: "scholarships", label: "Scholarships", icon: GraduationCap, description: "Find scholarships and student funding calls relevant to undergraduate students.", enabled: true, category: "Funding" },
       { key: "fyp-listing", label: "FYP Listing", icon: FileText, description: "Upload and manage your FYP title, abstract, team members, supervisor, and prototype status.", enabled: true, category: "Submissions", formType: "fyp" },
-      { key: "startup-seed", label: "Seed Funding", icon: Lightbulb, description: "Submit your startup, business idea, or FYP for ORIC scrutiny as a viable business model.", enabled: false, category: "Submissions", formType: "startupSeed" },
+      { key: "startup-seed", label: "Apply for Seed Funding", icon: Lightbulb, description: "Submit your startup, business idea, or FYP for ORIC scrutiny as a viable business model.", enabled: false, category: "Submissions", formType: "startupSeed" },
       ...sharedUserItems,
     ],
   },
@@ -272,6 +299,7 @@ export const PORTAL_CONFIG = {
       { key: "ip-workflows", label: "IP Workflows", icon: ShieldCheck, description: "Review faculty patent/copyright applications and manage approval workflows.", enabled: true, category: "Approvals" },
       { key: "startup-review", label: "Startup Review", icon: Lightbulb, description: "Scrutinize startup applications, approve viable models, and assign dedicated portal credentials.", enabled: true, category: "Approvals" },
       { key: "users", label: "Users", icon: UserCog, description: "Search users by name, email, or username; edit details; change passwords; suspend; or delete accounts.", enabled: true, category: "Management" },
+      { key: "forms-admin", label: "Create Forms", icon: FileText, description: "Create reusable application forms and attach them to published opportunities, grants, and collaboration calls.", enabled: true, category: "Publishing" },
       { key: "publish", label: "Publish", icon: Megaphone, description: "Publish opportunities, calls, and programs to selected portal audiences.", enabled: true, category: "Publishing" },
       { key: "site-updates", label: "Site Updates", icon: Settings, description: "Publish portal announcements and update frequently changed website elements such as director details.", enabled: true, category: "Publishing" },
       { key: "analytics", label: "Analytics", icon: BarChart3, description: "View tracked KPIs, optionally override displayed values, and manage portal-wide statistics.", enabled: true, category: "Analytics" },
@@ -282,13 +310,151 @@ export const PORTAL_CONFIG = {
   },
 };
 
+export const SAMPLE_FORMS = [
+  {
+    id: "internship-form",
+    name: "Internship Form",
+    description: "Default application form for undergraduate internship opportunities.",
+    fields: [
+      { key: "fullName", label: "Full Name", type: "text", auto: "name", required: true },
+      { key: "applyingFor", label: "Applying For", type: "text", auto: "postTitle", required: true },
+      { key: "rollNumber", label: "Roll Number/ID", type: "text", auto: "rollNumber", required: true },
+      { key: "email", label: "Email Address", type: "email", required: true },
+      { key: "phone", label: "Phone Number/WhatsApp", type: "tel", required: true },
+      { key: "linkedin", label: "LinkedIn Profile URL", type: "url", required: true },
+      { key: "portfolio", label: "Personal Website / Portfolio URL", type: "url" },
+      { key: "department", label: "Department", type: "text", required: true },
+      { key: "year", label: "Current Year of Study", type: "select", options: ["First", "Second", "Third", "Fourth/Final"], required: true },
+      { key: "gpa", label: "Current GPA", type: "number", required: true },
+      { key: "resume", label: "Resume/CV Upload", type: "file", accept: "application/pdf,.pdf", required: true },
+      { key: "coverLetter", label: "Cover Letter", type: "textarea" },
+      { key: "skills", label: "Key Skills", type: "text", required: true },
+      { key: "interest", label: "Why are you interested in this opportunity?", type: "textarea", required: true },
+      { key: "learningGoal", label: "What do you hope to learn or achieve during this opportunity?", type: "textarea", required: true },
+      { key: "confirmation", label: "I confirm that the information provided is accurate.", type: "checkbox", required: true },
+    ],
+  },
+  {
+    id: "workshop-form",
+    name: "Workshop Form",
+    description: "Default registration form for workshops.",
+    fields: [
+      { key: "fullName", label: "Full Name", type: "text", auto: "name", required: true },
+      { key: "applyingFor", label: "Applying For", type: "text", auto: "postTitle", required: true },
+      { key: "rollNumber", label: "Roll Number/ID", type: "text", auto: "rollNumber", required: true },
+      { key: "email", label: "Email Address", type: "email", required: true },
+      { key: "phone", label: "Phone Number/WhatsApp", type: "tel", required: true },
+      { key: "department", label: "Department", type: "text", required: true },
+      { key: "year", label: "Current Year of Study", type: "select", options: ["First", "Second", "Third", "Fourth/Final"], required: true },
+      { key: "experience", label: "Prior Experience / Skill Level", type: "text" },
+      { key: "motivation", label: "Why do you want to attend this workshop?", type: "textarea", required: true },
+      { key: "takeaway", label: "What do you hope to take away from this session?", type: "textarea" },
+      { key: "links", label: "Relevant Links", type: "url" },
+      { key: "dietary", label: "Dietary Restrictions", type: "text" },
+      { key: "accessibility", label: "Accessibility Requirements", type: "text" },
+    ],
+  },
+  {
+    id: "bootcamp-form",
+    name: "Bootcamp Form",
+    description: "Default application form for intensive bootcamp programs.",
+    fields: [
+      { key: "fullName", label: "Full Name", type: "text", auto: "name", required: true },
+      { key: "applyingFor", label: "Applying For", type: "text", auto: "postTitle", required: true },
+      { key: "rollNumber", label: "Roll Number/ID", type: "text", auto: "rollNumber", required: true },
+      { key: "email", label: "Email Address", type: "email", required: true },
+      { key: "phone", label: "Phone Number/WhatsApp", type: "tel", required: true },
+      { key: "department", label: "Department", type: "text", required: true },
+      { key: "year", label: "Current Year of Study", type: "select", options: ["First", "Second", "Third", "Fourth/Final"], required: true },
+      { key: "skillLevel", label: "Current Skill Level", type: "radio", options: ["Beginner", "Intermediate", "Advanced"], required: true },
+      { key: "experience", label: "Prior Experience", type: "textarea" },
+      { key: "portfolio", label: "Personal Website / Portfolio URL", type: "url" },
+      { key: "motivation", label: "Why are you applying for this specific bootcamp?", type: "textarea", required: true },
+      { key: "primaryGoal", label: "What is your primary goal upon completion?", type: "textarea", required: true },
+      { key: "commitment", label: "I confirm I can commit to the required amount of hours per week for the duration of this program.", type: "checkbox", required: true },
+    ],
+  },
+  {
+    id: "research-grant-form",
+    name: "Research Grant Form",
+    description: "Default application form for postgraduate and faculty research grants.",
+    fields: [
+      { key: "applicantType", label: "Applicant Type", type: "text", auto: "applicantType", required: true },
+      { key: "applyingFor", label: "Applying For", type: "text", auto: "postTitle", required: true },
+      { key: "fullName", label: "Full Name", type: "text", auto: "name", required: true },
+      { key: "universityId", label: "University ID / Roll Number", type: "text", auto: "rollNumber", required: true },
+      { key: "email", label: "Email Address", type: "email", required: true },
+      { key: "phone", label: "Phone Number/WhatsApp", type: "tel", required: true },
+      { key: "department", label: "Department", type: "text", required: true },
+      { key: "members", label: "Members / Research Assistants", type: "text", required: true },
+      { key: "supervisor", label: "Supervised by", type: "text", required: true },
+      { key: "projectTitle", label: "Project Title", type: "text", required: true },
+      { key: "domain", label: "Research Domain", type: "text", required: true },
+      { key: "abstract", label: "Summary / Abstract", type: "textarea", maxWords: 300, required: true },
+      { key: "startDate", label: "Start Date", type: "date", required: true },
+      { key: "endDate", label: "Proposed End Date", type: "date", required: true },
+      { key: "background", label: "Background and Problem Statement", type: "textarea", required: true },
+      { key: "objectives", label: "Aim and Primary Objectives", type: "textarea", required: true },
+      { key: "methodology", label: "Research Methodology", type: "file", accept: "application/pdf,.pdf", required: true },
+      { key: "timeline", label: "Expected Milestones and Timeline", type: "file", accept: "application/pdf,.pdf", required: true },
+      { key: "amount", label: "Total Grant Amount Requested", type: "number", required: true },
+      { key: "budgetEquipment", label: "Budget Breakdown - Equipment", type: "number", required: true },
+      { key: "budgetConsumables", label: "Budget Breakdown - Consumables", type: "number", required: true },
+      { key: "budgetTravel", label: "Budget Breakdown - Travel", type: "number", required: true },
+      { key: "budgetSoftware", label: "Budget Breakdown - Software", type: "number", required: true },
+      { key: "budgetPersonnel", label: "Budget Breakdown - Personnel/Stipends", type: "number", required: true },
+      { key: "coFunding", label: "Existing / Co-Funding Sources", type: "textarea", required: true },
+      { key: "justification", label: "Justification of Resources", type: "textarea", required: true },
+      { key: "ipPotential", label: "Intellectual Property (IP) and Innovation Potential", type: "radio", options: ["Yes", "No", "Unsure"], required: true },
+      { key: "industryPartners", label: "Industry Partners", type: "textarea", required: true },
+      { key: "ethicalClearance", label: "I acknowledge ethical clearance requirements for Human Subjects, Animal Testing, Biohazards, and related areas.", type: "checkbox", required: true },
+      { key: "originality", label: "I confirm this proposal is original work.", type: "checkbox", required: true },
+    ],
+  },
+  {
+    id: "feedback-form",
+    name: "ORIC Portal Feedback Form",
+    description: "Default feedback form for all ORIC portal users.",
+    fields: [
+      { key: "overallSatisfaction", label: "Overall Satisfaction Rating", type: "rating", required: true },
+      { key: "easeOfNavigation", label: "Ease of Navigation: How easy was it to find the information you were looking for?", type: "rating", required: true },
+      { key: "mobileExperience", label: "Mobile Experience", type: "radio", options: ["Excellent", "Good", "Average", "Poor"], required: true },
+      { key: "technicalIssues", label: "Did you experience any technical issues or slow loading times?", type: "radio", options: ["Yes", "No"], required: true },
+      { key: "issueContext", label: "If Yes, what were you trying to do when the issue occurred?", type: "textarea" },
+      { key: "screenshot", label: "Screenshot Upload", type: "file", accept: "image/*" },
+      { key: "requestedFeature", label: "What is one feature you would like to see added to the ORIC portal?", type: "textarea", required: true },
+      { key: "otherSuggestions", label: "Any other suggestions or comments?", type: "textarea" },
+    ],
+  },
+];
+
 export const SAMPLE_POSTS = [
-  { id: 1, type: "Internship", title: "Software Engineering Internship", audience: ["undergraduate"], status: "Open", meta: "Tech partner - Hyderabad", body: "Frontend, backend, and QA internship slots for final year students.", applyLink: "https://oric.muet.edu.pk/apply/internship-software" },
-  { id: 2, type: "Scholarship", title: "Innovation Scholarship Call", audience: ["undergraduate", "postgraduate"], status: "Open", meta: "Deadline: 18 Aug 2026", body: "Merit-based support for students working on innovation-led projects.", applyLink: "https://oric.muet.edu.pk/apply/innovation-scholarship" },
+  { id: 1, type: "Internship", title: "Software Engineering Internship", audience: ["undergraduate"], status: "Open", meta: "Tech partner - Hyderabad", deadline: "15 Aug 2026", formId: "internship-form", body: "Frontend, backend, and QA internship slots for final year students.", applyLink: "https://oric.muet.edu.pk/apply/internship-software" },
+  { id: 11, type: "Workshop", title: "Research Methodology Workshop", audience: ["undergraduate"], status: "Open", meta: "ORIC Training Hall", deadline: "22 Aug 2026", formId: "workshop-form", body: "Hands-on workshop for survey design, literature review planning, and applied research documentation.", applyLink: "https://oric.muet.edu.pk/apply/research-methodology-workshop" },
+  { id: 12, type: "Bootcamp", title: "Startup Pitch Bootcamp", audience: ["undergraduate"], status: "Open", meta: "BIC MUET", deadline: "30 Aug 2026", formId: "bootcamp-form", body: "A focused bootcamp for idea validation, pitch practice, business model drafting, and mentor feedback.", applyLink: "https://oric.muet.edu.pk/apply/startup-pitch-bootcamp" },
+  { id: 13, type: "Industrial Visit", title: "Software Industry Visit", audience: ["undergraduate"], status: "Open", meta: "Hyderabad Software House", deadline: "05 Sep 2026", formId: "workshop-form", body: "Visit an industry partner to observe delivery workflows, QA practices, and internship pathways.", applyLink: "https://oric.muet.edu.pk/apply/software-industry-visit" },
+  { id: 14, type: "Other Opportunity", title: "Innovation Volunteer Program", audience: ["undergraduate"], status: "Open", meta: "ORIC MUET", deadline: "10 Sep 2026", body: "Volunteer with ORIC innovation programs and gain exposure to events, research showcases, and startup support.", applyLink: "https://oric.muet.edu.pk/apply/innovation-volunteer" },
+  { id: 21, type: "Competition", title: "Hacktober Fest Hackathon", audience: ["undergraduate"], status: "Open", meta: "Software Department", location: "Software Department", date: "27-07-2026", time: "10am to 2pm", duration: "3 days", organizedBy: "Software Engineering Department", interestedCount: 34, body: "Student teams compete with prototypes, research ideas, and startup concepts for mentor review." },
+  { id: 22, type: "Talk", title: "TEDxMUET: Founders Stories 2026", audience: ["undergraduate"], status: "Open", meta: "Main Auditorium", location: "Main Auditorium", date: "02-08-2026", time: "11am to 12pm", duration: "1 hour", organizedBy: "ORIC", interestedCount: 48, body: "Founders and alumni share practical journeys from first idea to market launch." },
+  { id: 23, type: "Job Fair", title: "MUET Career Fair 2026", audience: ["undergraduate"], status: "Open", meta: "Central Library Lawn", location: "Central Library Lawn", date: "15-08-2026", time: "9am to 4pm", duration: "1 day", organizedBy: "ORIC", interestedCount: 126, body: "Meet employers, submit resumes, and explore graduate trainee and internship openings." },
+  { id: 24, type: "Academic Event", title: "Annual Book Fair", audience: ["undergraduate"], status: "Open", meta: "Central Library", location: "Central Library", date: "22-08-2026", time: "10am to 3pm", duration: "1 day", organizedBy: "Central Library", interestedCount: 57, body: "Browse academic titles, research references, and reading resources curated for MUET students." },
+  { id: 25, type: "Entertainment", title: "MUET Gala 2026", audience: ["undergraduate"], status: "Open", meta: "Student Activity Center", location: "Student Activity Center", date: "29-08-2026", time: "5pm to 8pm", duration: "3 hours", organizedBy: "MUET", interestedCount: 92, body: "A campus celebration with performances, networking, and student community activities." },
+  { id: 26, type: "Other Event", title: "Community Design Sprint", audience: ["undergraduate"], status: "Open", meta: "Civil Engineering Studio", location: "Civil Engineering Studio", date: "05-09-2026", time: "10am to 1pm", duration: "2 days", interestedCount: 41, body: "Cross-disciplinary teams design quick solutions for community and campus challenges." },
+  { id: 2, type: "Scholarship", title: "Need-Cum Merit Scholarship", audience: ["undergraduate"], status: "Open", meta: "SFAO - Admin Building", deadline: "18 Aug 2026", logo: SCHOLARSHIP_LOGOS.needMerit, body: "Financial support for students with demonstrated need and strong academic performance.", details: "Eligibility: enrolled undergraduate student, satisfactory academic progress, demonstrated financial need, and no major disciplinary record.\n\nSelection considers academic record, family income, supporting documents, and SFAO verification.", documentsRequired: "Filled application form\nCNIC/B-Form copy\nStudent ID card copy\nLatest transcript/result card\nParent/guardian CNIC copy\nIncome certificate or salary slip\nUtility bills\nFee voucher\nAny additional SFAO verification documents", applicationFormUrl: "/resources/scholarships/need-cum-merit-scholarship-form.txt", applyLink: "/resources/scholarships/need-cum-merit-scholarship-form.txt" },
+  { id: 41, type: "Scholarship", title: "Student Advancement & Endowment Fund (SAEF)", audience: ["undergraduate"], status: "Open", meta: "SFAO - Admin Building", deadline: "25 Aug 2026", logo: SCHOLARSHIP_LOGOS.saef, body: "University advancement and endowment support for deserving students facing financial constraints.", details: "Eligibility: active student status, financial need verified by SFAO, acceptable academic standing, and complete documentation.\n\nPriority may be given to students with exceptional hardship or continuity risk.", documentsRequired: "Filled SAEF application form\nCNIC/B-Form copy\nStudent ID card copy\nAcademic transcript\nIncome proof\nGuardian CNIC\nUtility bills\nPersonal statement\nAny SFAO-required affidavit", applicationFormUrl: "/resources/scholarships/saef-scholarship-form.txt", applyLink: "/resources/scholarships/saef-scholarship-form.txt" },
+  { id: 42, type: "Scholarship", title: "Financial Assistance on Poverty Basis", audience: ["undergraduate"], status: "Open", meta: "SFAO - Admin Building", deadline: "30 Aug 2026", logo: SCHOLARSHIP_LOGOS.poverty, body: "Need-based assistance for students from low-income households requiring fee or educational support.", details: "Eligibility: low-income household, enrolled student status, satisfactory conduct, and complete poverty/need verification by SFAO.\n\nApplications are reviewed after document screening and may require interview or home/income verification.", documentsRequired: "Filled application form\nCNIC/B-Form copy\nStudent ID card copy\nParent/guardian CNIC\nIncome certificate\nPoverty certificate if applicable\nUtility bills\nRent agreement if applicable\nFee challan\nLatest transcript", applicationFormUrl: "/resources/scholarships/poverty-basis-financial-assistance-form.txt", applyLink: "/resources/scholarships/poverty-basis-financial-assistance-form.txt" },
+  { id: 43, type: "Scholarship", title: "Citizen Foundation Scholarship", audience: ["undergraduate"], status: "Closed", meta: "SFAO - Admin Building", deadline: "12 Sep 2026", logo: SCHOLARSHIP_LOGOS.citizen, body: "External foundation-linked support for eligible students who meet academic and financial criteria.", details: "Eligibility: students meeting foundation criteria, financial need, academic performance requirements, and SFAO verification.\n\nClosed calls remain visible for reference until the next cycle is announced.", documentsRequired: "Foundation application form\nCNIC/B-Form copy\nStudent ID card copy\nAcademic transcript\nIncome proof\nGuardian CNIC\nRecommendation or verification letter if requested\nAny foundation-specific documents", applicationFormUrl: "/resources/scholarships/citizen-foundation-scholarship-form.txt", applyLink: "/resources/scholarships/citizen-foundation-scholarship-form.txt" },
+  { id: 44, type: "Scholarship", title: "Zakat based Scholarship", audience: ["undergraduate"], status: "Open", meta: "SFAO - Admin Building", deadline: "20 Sep 2026", logo: SCHOLARSHIP_LOGOS.zakat, body: "Zakat-funded scholarship support for eligible Muslim students as per applicable Zakat criteria.", details: "Eligibility: student must satisfy Zakat eligibility requirements, demonstrate financial need, and provide complete supporting documents.\n\nSFAO may require specific declarations or verification before forwarding applications.", documentsRequired: "Filled Zakat scholarship form\nCNIC/B-Form copy\nStudent ID card copy\nZakat eligibility declaration\nParent/guardian CNIC\nIncome certificate\nUtility bills\nFee voucher\nAcademic transcript", applicationFormUrl: "/resources/scholarships/zakat-based-scholarship-form.txt", applyLink: "/resources/scholarships/zakat-based-scholarship-form.txt" },
+  { id: 45, type: "Scholarship", title: "USAID Scholarship", audience: ["undergraduate"], status: "Closed", meta: "SFAO - Admin Building", deadline: "05 Oct 2026", logo: SCHOLARSHIP_LOGOS.usaid, body: "USAID-linked scholarship opportunity subject to donor criteria, SFAO guidance, and announced cycles.", details: "Eligibility: based on USAID program requirements, academic standing, financial need, and complete SFAO/donor documentation.\n\nStudents should follow SFAO instructions carefully because donor-funded calls may have strict formats and deadlines.", documentsRequired: "USAID application form\nCNIC/B-Form copy\nStudent ID card copy\nAcademic transcript\nIncome proof\nGuardian CNIC\nPhotographs if requested\nDonor-required declarations\nAny SFAO checklist documents", applicationFormUrl: "/resources/scholarships/usaid-scholarship-form.txt", applyLink: "/resources/scholarships/usaid-scholarship-form.txt" },
   { id: 3, type: "Research Job", title: "RA: Applied AI for Energy Systems", audience: ["postgraduate"], status: "Open", meta: "Research assistantship", body: "Support data preparation, model training, and evaluation for energy system optimization research.", applyLink: "https://oric.muet.edu.pk/apply/ra-energy-ai" },
-  { id: 4, type: "Research Grant", title: "Applied AI for Energy Systems", audience: ["postgraduate", "faculty"], status: "Open", meta: "PKR 2.5M seed support", body: "Proposal call for applied AI models in energy monitoring and optimization.", applyLink: "https://oric.muet.edu.pk/apply/grant-energy-ai" },
+  { id: 4, type: "Research Grant", title: "Applied AI for Energy Systems", audience: ["postgraduate", "faculty"], status: "Open", meta: "PKR 2.5M seed support", formId: "research-grant-form", body: "Proposal call for applied AI models in energy monitoring and optimization.", applyLink: "https://oric.muet.edu.pk/apply/grant-energy-ai" },
   { id: 5, type: "Conference", title: "International Research Mobility Support", audience: ["postgraduate", "faculty"], status: "Open", meta: "Travel grant available", body: "Support for accepted papers at indexed international conferences.", applyLink: "https://oric.muet.edu.pk/apply/research-mobility" },
   { id: 6, type: "Resource", title: "ORIC Proposal Template", audience: ["undergraduate", "postgraduate", "faculty", "startup"], status: "Available", meta: "DOCX template", body: "Standard template for ORIC submissions and project proposals.", applyLink: "#" },
+  { id: 31, type: "Resource", title: "FYP Thesis Guidelines", audience: ["undergraduate"], status: "Available", meta: "Guideline file", body: "Formatting, chapter structure, submission requirements, and evaluation guidance for FYP thesis writing.", applyLink: "/resources/fyp-thesis-guidelines.txt" },
+  { id: 32, type: "Resource", title: "Research Methodology Guidelines", audience: ["undergraduate"], status: "Available", meta: "Guideline file", body: "Research planning, methods selection, sampling, analysis, and reporting guidance for student projects.", applyLink: "/resources/research-methodology-guidelines.txt" },
+  { id: 33, type: "Resource", title: "Pitch Deck Templates", audience: ["undergraduate"], status: "Available", meta: "Template file", body: "Slide templates for startup, FYP commercialization, and innovation pitch presentations.", applyLink: "/resources/pitch-deck-templates.txt" },
+  { id: 34, type: "Resource", title: "Business Model Templates", audience: ["undergraduate"], status: "Available", meta: "Template file", body: "Business model canvas and commercialization planning templates for student teams.", applyLink: "/resources/business-model-templates.txt" },
+  { id: 35, type: "Resource", title: "Survey Design Guidelines & Templates", audience: ["undergraduate"], status: "Available", meta: "Guideline and template file", body: "Questionnaire design guidance, consent text, and reusable survey templates.", applyLink: "/resources/survey-design-guidelines-templates.txt" },
 ];
 
 export const FALLBACK_OPPORTUNITIES = {
@@ -319,7 +485,7 @@ export const SAMPLE_LISTINGS = [
   { id: "st-1", kind: "Startup", title: "AquaSense IoT", owner: "Nida Memon", department: "Electronic Engineering", summary: "Low-cost water quality monitoring for rural Sindh.", status: "Approved", needs: "Seed investment and pilot deployment partner", image: PLACEHOLDER_IMAGES.startup },
   { id: "fyp-1", kind: "FYP", title: "AI Crop Disease Detector", owner: "Team Software Engineering", department: "Software Engineering", summary: "Mobile-first plant disease detection using lightweight ML.", status: "Approved", needs: "Dataset access and commercialization support", image: PLACEHOLDER_IMAGES.fyp },
   { id: "biz-1", kind: "Business Idea", title: "Campus Circular Marketplace", owner: "Ali Shah", department: "Business Administration", summary: "Verified marketplace for student services and reusable academic materials.", status: "Approved", needs: "Mentorship and investor validation", image: PLACEHOLDER_IMAGES.business },
-  { id: "st-demo", kind: "Startup", title: "SindhuGPT", owner: "Ghulam Hussain", ownerEmail: "23sw@students.muet.edu.pk", department: "Software Engineering", summary: "A regional AI assistant for Sindhi knowledge access, education, and university services.", status: "Approved", needs: "Cloud credits, pilot customers, and investor introductions", image: PLACEHOLDER_IMAGES.startup },
+  { id: "st-demo", kind: "Startup", title: "SindhuGPT", owner: "Ghulam Hussain", ownerEmail: "23sw050@students.muet.edu.pk", department: "Software Engineering", summary: "A regional AI assistant for Sindhi knowledge access, education, and university services.", status: "Approved", needs: "Cloud credits, pilot customers, and investor introductions", image: PLACEHOLDER_IMAGES.startup },
 ];
 
 export const SAMPLE_RESEARCH_PROFILES = [
@@ -327,3 +493,4 @@ export const SAMPLE_RESEARCH_PROFILES = [
   { id: 2, name: "Dr. Umar Farooq", gender: "male", department: "Software Engineering", interests: "Machine learning, data platforms, civic technology", orcid: "0000-0001-7821-1150", scholar: "https://scholar.google.com", bio: "Works on applied ML and digital systems for public-sector research problems." },
   { id: 3, name: "Prof. Nadia Baloch", gender: "female", department: "Telecommunication Engineering", interests: "Wireless networks, IoT, edge computing", orcid: "0000-0003-3367-8821", scholar: "https://scholar.google.com", bio: "Leads IoT-enabled research projects with agriculture and industry partners." },
 ];
+

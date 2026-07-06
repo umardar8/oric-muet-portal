@@ -1,0 +1,11 @@
+Research Methodology Guidelines
+
+Replace this starter file with the official ORIC/MUET research methodology guideline document.
+
+Suggested contents:
+- Problem statement and objectives
+- Literature review planning
+- Research design and sampling
+- Data collection methods
+- Analysis plan
+- Ethics and consent requirements

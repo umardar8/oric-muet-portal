@@ -1,0 +1,11 @@
+Survey Design Guidelines & Templates
+
+Replace this starter file with official survey design guidelines and reusable templates.
+
+Suggested contents:
+- Consent statement
+- Demographic questions
+- Likert scale examples
+- Open-ended question examples
+- Sampling notes
+- Pilot testing checklist

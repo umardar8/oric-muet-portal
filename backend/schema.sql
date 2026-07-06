@@ -179,6 +179,12 @@ CREATE TABLE notifications (
   FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+CREATE TABLE portal_state (
+  state_key VARCHAR(120) PRIMARY KEY,
+  state_json LONGTEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 INSERT INTO feature_flags (feature_key, enabled)
 VALUES
   ('startup-seed', 0),

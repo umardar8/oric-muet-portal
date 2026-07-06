@@ -1,0 +1,13 @@
+Business Model Templates
+
+Replace this starter file with official business model templates.
+
+Suggested sections:
+- Customer segments
+- Value proposition
+- Channels
+- Revenue streams
+- Key activities
+- Key partners
+- Cost structure
+- Validation plan

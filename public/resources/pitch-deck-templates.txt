@@ -1,0 +1,13 @@
+Pitch Deck Templates
+
+Replace this starter file with official pitch deck templates.
+
+Suggested slide sequence:
+- Problem
+- Solution
+- Target users
+- Market and competitors
+- Product or prototype
+- Business model
+- Team
+- Funding or support required

@@ -1,0 +1,11 @@
+FYP Thesis Guidelines
+
+Replace this starter file with the official ORIC/MUET FYP thesis guideline document.
+
+Suggested contents:
+- Title page and declaration format
+- Abstract and keywords
+- Chapter structure
+- Citation and reference style
+- Similarity and submission requirements
+- Evaluation rubric

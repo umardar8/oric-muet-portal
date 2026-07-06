@@ -6,13 +6,20 @@ import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { FALLBACK_OPPORTUNITIES, PLACEHOLDER_IMAGES, PORTAL_CONFIG, PORTAL_TYPES } from "../portal/portalConfig";
 import {
+  getForms,
+  getFeedbackFormAssignments,
+  getAnalyticsOverrides,
   getListings,
   getPagedUsers,
   getPortalFeatures,
   getPosts,
   getResearchProfiles,
   getSubmissions,
+  markPostInterested,
   savePost,
+  saveForm,
+  saveFeedbackFormAssignments,
+  saveAnalyticsOverrides,
   saveListing,
   saveResearchProfile,
   saveSubmission,
@@ -35,6 +42,27 @@ function readImageFile(file, callback) {
   }
   const reader = new FileReader();
   reader.onload = () => callback(reader.result);
+  reader.readAsDataURL(file);
+}
+
+function readDocumentFile(file, callback) {
+  if (!file) return;
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error("Please choose a PDF, DOC, DOCX, or TXT file.");
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error("Please choose a file smaller than 5 MB.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => callback(reader.result, file.name);
   reader.readAsDataURL(file);
 }
 
@@ -158,10 +186,9 @@ function FeatureView({ user, feature, onChange }) {
   }
 
   if (feature.key === "browse-listings") return <BrowseListings />;
-  if (feature.key === "internships") return <OpportunityBoard feature={feature} type="Internship" audience={user.portalType} />;
-  if (feature.key === "industrial-visits") return <VisitBoard feature={feature} audience={user.portalType} />;
-  if (feature.key === "activities") return <ActivityBoard feature={feature} audience={user.portalType} />;
-  if (feature.key === "scholarships") return <OpportunityBoard feature={feature} type="Scholarship" audience={user.portalType} />;
+  if (feature.key === "internships") return <OpportunityBoard feature={feature} audience={user.portalType} user={user} onChange={onChange} />;
+  if (feature.key === "activities") return <EventBoard feature={feature} audience={user.portalType} user={user} onChange={onChange} />;
+  if (feature.key === "scholarships") return <ScholarshipBoard feature={feature} audience={user.portalType} />;
   if (feature.key === "fyp-listing") return <FypListing user={user} onChange={onChange} />;
   if (feature.key === "research-projects") return <ResearchJobs user={user} onChange={onChange} />;
   if (feature.key === "thesis-listing") return <ThesisListing user={user} onChange={onChange} />;
@@ -171,6 +198,7 @@ function FeatureView({ user, feature, onChange }) {
   if (feature.key === "users") return <UserManagement onChange={onChange} />;
   if (feature.key === "analytics") return <AnalyticsPanel />;
   if (feature.key === "reports") return <ReportsPanel />;
+  if (feature.key === "forms-admin") return <FormsAdminPanel onChange={onChange} />;
   if (feature.key === "publish") return <PublishingPanel onChange={onChange} />;
   if (feature.key === "site-updates") return <SiteUpdatesPanel />;
   if (feature.key === "resource-admin") return <ResourceAdminPanel />;
@@ -186,68 +214,204 @@ function FeatureView({ user, feature, onChange }) {
   return <SubmissionFeature user={user} feature={feature} onChange={onChange} />;
 }
 
-function OpportunityBoard({ feature, type, audience, minimum = 0 }) {
-  const posts = getOpportunityPosts(type, audience, minimum);
+const OPPORTUNITY_TYPES = ["Internship", "Workshop", "Bootcamp", "Industrial Visit", "Other Opportunity"];
+const EVENT_TYPES = ["Competition", "Talk", "Job Fair", "Academic Event", "Entertainment", "Other Event"];
+
+function OpportunityBoard({ feature, type, audience, user, onChange = () => {}, minimum = 0 }) {
+  const types = type ? [type] : OPPORTUNITY_TYPES;
+  const [filter, setFilter] = useState("All");
+  const posts = getOpportunityPosts(types, audience, minimum).filter((post) => filter === "All" || post.type === filter);
   const [selected, setSelected] = useState(null);
+  const [applying, setApplying] = useState(null);
 
   return (
     <div className="portal-page">
       <FeatureHeader feature={feature} />
+      {!type && <FilterTabs options={["All", ...OPPORTUNITY_TYPES]} value={filter} onChange={setFilter} />}
       <div className="portal-board-grid">
-        {posts.map((post) => <OpportunityCard post={post} key={post.id} onView={() => setSelected(post)} />)}
-        {posts.length === 0 && <EmptyPanel text={`No ${type.toLowerCase()} opportunities are currently open.`} />}
+        {posts.map((post) => (
+          <OpportunityCard
+            post={post}
+            key={post.id}
+            onView={() => setSelected(post)}
+            onApply={() => setApplying(post)}
+          />
+        ))}
+        {posts.length === 0 && <EmptyPanel text={`No ${type ? type.toLowerCase() : "student"} opportunities are currently open.`} />}
       </div>
       {selected && <OpportunityDetails post={selected} onClose={() => setSelected(null)} />}
+      {applying && <OpportunityApplyForm post={applying} user={user} onClose={() => setApplying(null)} onChange={onChange} />}
     </div>
   );
 }
 
-function VisitBoard({ feature, audience }) {
-  const posts = getPosts().filter((post) => post.type === "Industrial Visit" && post.audience?.includes(audience));
-  const fallback = [
-    { id: "visit-1", title: "Power Plant Exposure Visit", meta: "Registration closes soon", body: "A guided industry visit for engineering students to understand plant operations, safety, and technical workflows." },
-    { id: "visit-2", title: "Software House Visit", meta: "Limited seats", body: "Meet engineering teams, observe agile delivery practices, and learn about internship pathways." },
-  ];
-  return <SimpleCards feature={feature} items={posts.length ? posts : fallback} tag="Visit" />;
-}
+function EventBoard({ feature, audience, user, onChange }) {
+  const [filter, setFilter] = useState("All");
+  const [selected, setSelected] = useState(null);
+  const posts = getPosts()
+    .filter((post) => EVENT_TYPES.includes(post.type) && post.audience?.includes(audience))
+    .filter((post) => filter === "All" || post.type === filter);
 
-function ActivityBoard({ feature, audience }) {
-  const posts = getPosts().filter((post) => post.type === "Activity" && post.audience?.includes(audience));
-  const fallback = [
-    { id: "act-1", title: "Innovation Bootcamp", meta: "ORIC/BIC", body: "A hands-on activity to refine ideas, build teams, and prepare early prototypes." },
-    { id: "act-2", title: "Pitch Practice Circle", meta: "Weekly", body: "Practice concise pitching and get feedback from mentors before seed funding calls." },
-  ];
-  return <SimpleCards feature={feature} items={posts.length ? posts : fallback} tag="Activity" />;
-}
+  function markInterested(post) {
+    markPostInterested(post.id, user.id);
+    toast.success("Marked as interested.");
+    onChange();
+  }
 
-function SimpleCards({ feature, items, tag }) {
   return (
     <div className="portal-page">
       <FeatureHeader feature={feature} />
+      <FilterTabs options={["All", ...EVENT_TYPES]} value={filter} onChange={setFilter} />
       <div className="portal-board-grid">
-        {items.map((item) => (
-          <article className="portal-detail-card" key={item.id}>
-            <img className="portal-card-image" src={getOpportunityImage(item)} alt="" loading="lazy" />
-            <span>{tag}</span>
-            <h3>{item.title}</h3>
-            <p>{item.body}</p>
-            <small>{item.meta}</small>
-          </article>
-        ))}
+        {posts.map((post) => <EventCard post={post} user={user} key={post.id} onView={() => setSelected(post)} onInterested={() => markInterested(post)} />)}
+        {posts.length === 0 && <EmptyPanel text="No events match this filter yet." />}
       </div>
+      {selected && <EventDetails post={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
 
-function OpportunityCard({ post, onView }) {
+function ScholarshipBoard({ feature, audience }) {
+  const [detailsPost, setDetailsPost] = useState(null);
+  const [documentsPost, setDocumentsPost] = useState(null);
+  const posts = getPosts()
+    .filter((post) => post.type === "Scholarship" && post.audience?.includes(audience))
+    .sort((first, second) => getScholarshipStatusRank(first.status) - getScholarshipStatusRank(second.status));
+
+  return (
+    <div className="portal-page">
+      <FeatureHeader
+        feature={{
+          ...feature,
+          description: `${feature.description}\nDownload the application form and submit it at the SFAO department through proper channel along with required documents.`,
+        }}
+      />
+      <div className="portal-scholarship-list">
+        {posts.map((post) => (
+          <ScholarshipCard
+            post={post}
+            key={post.id}
+            onDetails={() => setDetailsPost(post)}
+            onDocuments={() => setDocumentsPost(post)}
+          />
+        ))}
+        {posts.length === 0 && <EmptyPanel text="No scholarships are currently published for this portal." />}
+      </div>
+      {detailsPost && (
+        <ScholarshipInfoModal
+          post={detailsPost}
+          title="Eligibility and Details"
+          body={detailsPost.details || detailsPost.eligibility || detailsPost.body}
+          onClose={() => setDetailsPost(null)}
+        />
+      )}
+      {documentsPost && (
+        <ScholarshipInfoModal
+          post={documentsPost}
+          title="Documents Required"
+          body={documentsPost.documentsRequired || "Documents list will be announced by SFAO."}
+          onClose={() => setDocumentsPost(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ScholarshipCard({ post, onDetails, onDocuments }) {
+  const formUrl = post.applicationFormUrl || post.applyLink || "#";
+  const formName = post.applicationFormName || `${post.title.replace(/\s+/g, "-").toLowerCase()}-application-form`;
+  return (
+    <article className="portal-scholarship-card">
+      <div className="portal-scholarship-card__main">
+        <div className="portal-scholarship-card__media">
+          <span className={`portal-status-pill ${String(post.status || "").toLowerCase() === "closed" ? "portal-status-pill--closed" : ""}`}>
+            {post.status || "Open"}
+          </span>
+          <ScholarshipLogo post={post} />
+        </div>
+        <div>
+          <h3>{post.title}</h3>
+          <p>{post.body}</p>
+          <div className="portal-scholarship-meta">
+            <small><strong>Deadline:</strong> {post.deadline || extractDeadline(post.meta) || "To be announced"}</small>
+            <small><strong>Managed by:</strong> SFAO Department</small>
+            <small><strong>Organized by:</strong> {post.organizedBy || "SFAO Department"}</small>
+          </div>
+        </div>
+      </div>
+      <div className="portal-scholarship-actions">
+        <div>
+          <button className="portal-secondary" onClick={onDetails}>Details</button>
+          <button className="portal-secondary" onClick={onDocuments}>Documents Required</button>
+        </div>
+        <a className="portal-primary" href={formUrl} download={formUrl !== "#" ? formName : undefined}>Download Application Form</a>
+      </div>
+    </article>
+  );
+}
+
+function ScholarshipLogo({ post }) {
+  if (post.logo || post.logoUrl || post.logo_url) {
+    return <img className="portal-scholarship-logo" src={post.logo || post.logoUrl || post.logo_url} alt="" loading="lazy" />;
+  }
+  return <div className="portal-scholarship-logo portal-scholarship-logo--fallback">{getScholarshipInitials(post.title)}</div>;
+}
+
+function getScholarshipInitials(title = "Scholarship") {
+  return title
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function getScholarshipStatusRank(status = "") {
+  return String(status).toLowerCase() === "closed" ? 1 : 0;
+}
+
+function ScholarshipInfoModal({ post, title, body, onClose }) {
+  return (
+    <div className="portal-modal-backdrop" role="presentation" onClick={onClose}>
+      <section className="portal-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+        <div className="portal-modal__header">
+          <span>{post.title}</span>
+          <button onClick={onClose}>Close</button>
+        </div>
+        <h2>{title}</h2>
+        <p className="portal-preserve-lines">{body}</p>
+      </section>
+    </div>
+  );
+}
+
+function FilterTabs({ options, value, onChange }) {
+  return (
+    <div className="portal-filter-tabs">
+      {options.map((option) => (
+        <button key={option} className={value === option ? "portal-filter-tabs__active" : ""} onClick={() => onChange(option)}>
+          {option.replace(" Opportunity", "").replace(" Event", "")}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function OpportunityCard({ post, onView, onApply }) {
   return (
     <article className="portal-detail-card">
       <img className="portal-card-image" src={getOpportunityImage(post)} alt="" loading="lazy" />
-      <span>{post.status}</span>
+      <span>{post.type}</span>
       <h3>{post.title}</h3>
       <p>{post.body}</p>
       <small>{post.meta}</small>
-      <button className="portal-secondary" onClick={onView}>View Details</button>
+      <small><strong>Organized by:</strong> {post.organizedBy || "To be announced"}</small>
+      <small><strong>Deadline:</strong> {post.deadline || extractDeadline(post.meta) || "To be announced"}</small>
+      <div className="portal-card-actions">
+        <button className="portal-secondary" onClick={onView}>Details</button>
+        <button className="portal-primary" onClick={onApply}>Apply</button>
+      </div>
     </article>
   );
 }
@@ -266,9 +430,270 @@ function OpportunityDetails({ post, onClose }) {
         <dl>
           <div><dt>Status</dt><dd>{post.status}</dd></div>
           <div><dt>Details</dt><dd>{post.meta}</dd></div>
+          <div><dt>Organized by</dt><dd>{post.organizedBy || "To be announced"}</dd></div>
+          <div><dt>Deadline</dt><dd>{post.deadline || extractDeadline(post.meta) || "To be announced"}</dd></div>
         </dl>
-        <a className="portal-primary" href={post.applyLink || "#"} target="_blank" rel="noopener noreferrer">Apply</a>
       </section>
+    </div>
+  );
+}
+
+function OpportunityApplyForm({ post, user, onClose, onChange }) {
+  const formTemplate = getFormForPost(post);
+  const [answers, setAnswers] = useState(() => getInitialFormAnswers(formTemplate, post, user));
+
+  function updateAnswer(key, value) {
+    setAnswers((current) => ({ ...current, [key]: value }));
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    const invalidWordField = formTemplate.fields.find((field) => field.maxWords && countWords(answers[field.key]) > field.maxWords);
+    if (invalidWordField) {
+      toast.error(`${invalidWordField.label} must be ${invalidWordField.maxWords} words or fewer.`);
+      return;
+    }
+    saveSubmission({
+      title: `Application: ${post.title}`,
+      summary: `${formTemplate.name} submitted for ${post.title}`,
+      details: JSON.stringify(answers),
+      featureKey: "opportunity-application",
+      portalType: user?.portalType || "portal",
+      actorId: user?.id || "guest",
+      actorName: user?.name || "Portal user",
+      actorEmail: user?.email || "",
+      target: post.title,
+      formId: formTemplate.id,
+      formName: formTemplate.name,
+      formAnswers: answers,
+    });
+    toast.success("Application submitted.");
+    onChange();
+    onClose();
+  }
+
+  return (
+    <div className="portal-modal-backdrop" role="presentation" onClick={onClose}>
+      <section className="portal-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+        <div className="portal-modal__header">
+          <span>Apply</span>
+          <button onClick={onClose}>Close</button>
+        </div>
+        <h2>{post.title}</h2>
+        <form className="portal-modal-form" onSubmit={submit}>
+          <p className="portal-form-note">{formTemplate.name}</p>
+          <div className="portal-modal-form-grid">
+            {formTemplate.fields.map((field) => (
+              <DynamicFormField
+                field={field}
+                value={answers[field.key]}
+                onChange={(value) => updateAnswer(field.key, value)}
+                key={field.key}
+              />
+            ))}
+          </div>
+          <button className="portal-primary" type="submit"><Send size={16} /> Submit Application</button>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function DynamicFormField({ field, value, onChange, editable = true }) {
+  const commonProps = {
+    className: "portal-input",
+    value: value || "",
+    onChange: (event) => onChange(event.target.value),
+    required: field.required,
+    disabled: !editable || Boolean(field.auto),
+  };
+  const words = field.maxWords ? countWords(value) : 0;
+
+  if (field.type === "textarea") {
+    return (
+      <label className="portal-dynamic-field">
+        {field.label}
+        <textarea {...commonProps} rows="4" />
+        {field.maxWords && <small>{words}/{field.maxWords} words</small>}
+      </label>
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <label className="portal-dynamic-field">
+        {field.label}
+        <select {...commonProps}>
+          <option value="">Select</option>
+          {field.options?.map((option) => <option key={option}>{option}</option>)}
+        </select>
+      </label>
+    );
+  }
+
+  if (field.type === "radio") {
+    return (
+      <fieldset className="portal-dynamic-field portal-dynamic-fieldset">
+        <legend>{field.label}</legend>
+        <div>
+          {field.options?.map((option) => (
+            <label key={option}>
+              <input type="radio" name={field.key} value={option} checked={value === option} required={field.required} onChange={() => onChange(option)} />
+              {option}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+
+  if (field.type === "rating") {
+    return (
+      <fieldset className="portal-dynamic-field portal-dynamic-fieldset portal-rating-field">
+        <legend>{field.label}</legend>
+        <div>
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <label key={rating}>
+              <input type="radio" name={field.key} value={rating} checked={Number(value) === rating} required={field.required} onChange={() => onChange(rating)} />
+              <span aria-hidden="true">{Number(value || 0) >= rating ? "★" : "☆"}</span>
+              <small>{rating}</small>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+
+  if (field.type === "checkbox") {
+    return (
+      <label className="portal-dynamic-field portal-checkbox-field">
+        <input type="checkbox" checked={Boolean(value)} required={field.required} onChange={(event) => onChange(event.target.checked)} />
+        {field.label}
+      </label>
+    );
+  }
+
+  if (field.type === "file") {
+    return (
+      <label className="portal-dynamic-field">
+        {field.label}
+        <input className="portal-input" type="file" accept={field.accept || undefined} required={field.required && !value} onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          if (field.accept?.includes("pdf") && file.type !== "application/pdf") {
+            toast.error("Please upload a PDF file.");
+            event.target.value = "";
+            return;
+          }
+          if (field.accept?.includes("image") && !file.type?.startsWith("image/")) {
+            toast.error("Please upload an image file.");
+            event.target.value = "";
+            return;
+          }
+          onChange(file.name);
+        }} />
+        {value && <small>{value}</small>}
+      </label>
+    );
+  }
+
+  return (
+    <label className="portal-dynamic-field">
+      {field.label}
+      <input {...commonProps} type={field.type || "text"} />
+    </label>
+  );
+}
+
+function getFormForPost(post) {
+  const forms = getForms();
+  const formId = post.formId || getDefaultFormId(post.type);
+  return forms.find((form) => form.id === formId) || forms[0] || { id: "basic-form", name: "Application Form", fields: [] };
+}
+
+function getDefaultFormId(type) {
+  if (type === "Internship") return "internship-form";
+  if (type === "Workshop" || type === "Industrial Visit") return "workshop-form";
+  if (type === "Bootcamp") return "bootcamp-form";
+  if (type === "Research Grant") return "research-grant-form";
+  return "internship-form";
+}
+
+function getInitialFormAnswers(formTemplate, post, user) {
+  return formTemplate.fields.reduce((answers, field) => {
+    answers[field.key] = getAutoFieldValue(field.auto, post, user);
+    return answers;
+  }, {});
+}
+
+function getAutoFieldValue(auto, post, user) {
+  if (!auto) return "";
+  if (auto === "name") return user?.name || "";
+  if (auto === "postTitle") return post.title || "";
+  if (auto === "rollNumber") return user?.rollNumber || user?.employeeId || "";
+  if (auto === "email") return user?.email || user?.username || "";
+  if (auto === "phone") return user?.phone || "";
+  if (auto === "department") return user?.department || "";
+  if (auto === "applicantType") return user?.portalType === PORTAL_TYPES.FACULTY ? "Faculty" : "Postgraduate Student";
+  return "";
+}
+
+function countWords(value = "") {
+  return String(value).trim().split(/\s+/).filter(Boolean).length;
+}
+
+function EventCard({ post, user, onView, onInterested }) {
+  const alreadyInterested = post.interestedUserIds?.includes(user.id);
+  return (
+    <article className="portal-detail-card">
+      <img className="portal-card-image" src={getOpportunityImage(post)} alt="" loading="lazy" />
+      <span>{post.type}</span>
+      <h3>{post.title}</h3>
+      <p>{post.body}</p>
+      <EventMeta post={post} />
+      <div className="portal-card-actions">
+        <button className="portal-secondary" onClick={onView}>Details</button>
+        <button className="portal-primary" disabled={alreadyInterested} onClick={onInterested}>
+          {alreadyInterested ? "Interested" : "Interested"}
+        </button>
+      </div>
+      <small>{Number(post.interestedCount || 0)} students interested</small>
+    </article>
+  );
+}
+
+function EventDetails({ post, onClose }) {
+  return (
+    <div className="portal-modal-backdrop" role="presentation" onClick={onClose}>
+      <section className="portal-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+        <div className="portal-modal__header">
+          <span>{post.type}</span>
+          <button onClick={onClose}>Close</button>
+        </div>
+        <img className="portal-modal-image" src={getOpportunityImage(post)} alt="" />
+        <h2>{post.title}</h2>
+        <p>{post.body}</p>
+        <dl>
+          <div><dt>Location</dt><dd>{post.location || post.meta || "To be announced"}</dd></div>
+          <div><dt>Date</dt><dd>{post.date || "To be announced"}</dd></div>
+          <div><dt>Time</dt><dd>{post.time || "To be announced"}</dd></div>
+          <div><dt>Duration</dt><dd>{post.duration || "To be announced"}</dd></div>
+          <div><dt>Organized by</dt><dd>{post.organizedBy || "To be announced"}</dd></div>
+          <div><dt>Interested</dt><dd>{Number(post.interestedCount || 0)} students</dd></div>
+        </dl>
+      </section>
+    </div>
+  );
+}
+
+function EventMeta({ post }) {
+  return (
+    <div className="portal-card-meta">
+      <small><strong>Location:</strong> {post.location || post.meta || "To be announced"}</small>
+      <small><strong>Date:</strong> {post.date || "To be announced"}</small>
+      <small><strong>Time:</strong> {post.time || "To be announced"}</small>
+      <small><strong>Duration:</strong> {post.duration || "To be announced"}</small>
+      <small><strong>Organized by:</strong> {post.organizedBy || "To be announced"}</small>
     </div>
   );
 }
@@ -315,8 +740,8 @@ function ThesisListing({ user, onChange }) {
   );
 }
 
-function GrantApplications({ user }) {
-  return <OpportunityBoard feature={{ label: "Grants", description: "Explore research and travel grant calls. Open a card for complete details and the admin-assigned application link." }} type="Research Grant" audience={user.portalType} minimum={5} />;
+function GrantApplications({ user, onChange }) {
+  return <OpportunityBoard feature={{ label: "Grants", description: "Explore research and travel grant calls. Open a card for complete details and apply through the assigned form." }} type="Research Grant" audience={user.portalType} user={user} onChange={onChange} minimum={5} />;
 }
 
 function ConferenceBoard({ user }) {
@@ -379,11 +804,17 @@ function EmptyPanel({ text }) {
   return <div className="portal-panel"><p className="portal-empty">{text}</p></div>;
 }
 
-function getOpportunityPosts(type, audience, minimum = 0) {
-  const adminPosts = getPosts().filter((post) => post.type === type && post.audience?.includes(audience));
-  const fallback = (FALLBACK_OPPORTUNITIES[type] || []).map((item) => ({ ...item, audience: [audience] }));
+function getOpportunityPosts(types, audience, minimum = 0) {
+  const typeList = Array.isArray(types) ? types : [types];
+  const adminPosts = getPosts().filter((post) => typeList.includes(post.type) && post.audience?.includes(audience));
+  const fallback = typeList.flatMap((type) => (FALLBACK_OPPORTUNITIES[type] || []).map((item) => ({ ...item, audience: [audience] })));
   const merged = [...adminPosts, ...fallback.filter((item) => !adminPosts.some((post) => post.title === item.title))];
   return minimum ? merged.slice(0, Math.max(minimum, adminPosts.length)) : merged;
+}
+
+function extractDeadline(meta = "") {
+  const match = String(meta).match(/deadline:\s*(.+)$/i);
+  return match?.[1];
 }
 
 function Announcements({ user }) {
@@ -640,8 +1071,15 @@ function UserManagement({ onChange }) {
 }
 
 function PublishingPanel({ onChange }) {
-  const [post, setPost] = useState({ type: "Announcement", title: "", body: "", meta: "", applyLink: "", image: "", audience: ["undergraduate"] });
+  const initialPost = { type: "Announcement", title: "", body: "", meta: "", organizedBy: "", deadline: "", location: "", date: "", time: "", duration: "", details: "", documentsRequired: "", applicationFormUrl: "", applicationFormName: "", logo: "", applyLink: "", formId: "", image: "", audience: ["undergraduate"] };
+  const [post, setPost] = useState(initialPost);
   const flags = getPortalFeatures(PORTAL_TYPES.ADMIN).filter((feature) => ["startup-seed", "ip-registration", "project-monitoring", "mentorship"].includes(feature.key));
+  const published = getPosts();
+  const forms = getForms();
+  const isOpportunity = OPPORTUNITY_TYPES.includes(post.type);
+  const isEvent = EVENT_TYPES.includes(post.type);
+  const isScholarship = post.type === "Scholarship";
+  const canAttachForm = [...OPPORTUNITY_TYPES, "Research Grant", "Research Job", "Conference"].includes(post.type);
 
   function toggleAudience(portalType) {
     setPost((current) => ({
@@ -654,10 +1092,26 @@ function PublishingPanel({ onChange }) {
 
   function publish(event) {
     event.preventDefault();
-    savePost(post);
-    setPost({ type: "Announcement", title: "", body: "", meta: "", applyLink: "", image: "", audience: ["undergraduate"] });
-    toast.success("Published successfully.");
+    savePost({
+      ...post,
+      status: isScholarship ? post.status || "Open" : post.status,
+      formId: canAttachForm ? post.formId || getDefaultFormId(post.type) : "",
+      applyLink: isScholarship ? post.applicationFormUrl || post.applyLink : post.applyLink,
+    });
+    setPost(initialPost);
+    toast.success(post.id ? "Updated successfully." : "Published successfully.");
     onChange();
+  }
+
+  function editPost(item) {
+    setPost({
+      ...initialPost,
+      ...item,
+      audience: item.audience || ["undergraduate"],
+      applicationFormUrl: item.applicationFormUrl || item.applyLink || "",
+      applicationFormName: item.applicationFormName || "",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -667,9 +1121,8 @@ function PublishingPanel({ onChange }) {
         <div className="portal-form-grid">
           <label>Type<select className="portal-input" value={post.type} onChange={(e) => setPost({ ...post, type: e.target.value })}>
             <option>Announcement</option>
-            <option>Internship</option>
-            <option>Industrial Visit</option>
-            <option>Activity</option>
+            {OPPORTUNITY_TYPES.map((type) => <option key={type}>{type}</option>)}
+            {EVENT_TYPES.map((type) => <option key={type}>{type}</option>)}
             <option>Scholarship</option>
             <option>Research Job</option>
             <option>Research Grant</option>
@@ -681,8 +1134,53 @@ function PublishingPanel({ onChange }) {
         <label>Body<textarea className="portal-input" rows="4" value={post.body} onChange={(e) => setPost({ ...post, body: e.target.value })} required /></label>
         <div className="portal-form-grid">
           <label>Meta / deadline / file note<input className="portal-input" value={post.meta} onChange={(e) => setPost({ ...post, meta: e.target.value })} /></label>
+          <label>Organized by<input className="portal-input" value={post.organizedBy || ""} onChange={(e) => setPost({ ...post, organizedBy: e.target.value })} placeholder="ORIC / Department / Society" /></label>
           <label>Apply link<input className="portal-input" value={post.applyLink} onChange={(e) => setPost({ ...post, applyLink: e.target.value })} placeholder="https://..." /></label>
         </div>
+        {canAttachForm && (
+          <label>Attach application form<select className="portal-input" value={post.formId || getDefaultFormId(post.type)} onChange={(e) => setPost({ ...post, formId: e.target.value })}>
+            {forms.map((form) => <option key={form.id} value={form.id}>{form.name}</option>)}
+          </select></label>
+        )}
+        {(isOpportunity || isScholarship) && (
+          <label>Opportunity deadline<input className="portal-input" value={post.deadline} onChange={(e) => setPost({ ...post, deadline: e.target.value })} placeholder="15 Aug 2026" required /></label>
+        )}
+        {isScholarship && (
+          <>
+            <div className="portal-form-grid">
+              <label>Status<select className="portal-input" value={post.status || "Open"} onChange={(e) => setPost({ ...post, status: e.target.value })}>
+                <option>Open</option>
+                <option>Closed</option>
+              </select></label>
+              <label>Application form download URL<input className="portal-input" value={post.applicationFormUrl || ""} onChange={(e) => setPost({ ...post, applicationFormUrl: e.target.value, applyLink: e.target.value })} placeholder="/resources/scholarships/form.pdf" required /></label>
+            </div>
+            <div className="portal-form-grid">
+              <label>Scholarship logo URL<input className="portal-input" value={post.logo || ""} onChange={(e) => setPost({ ...post, logo: e.target.value })} placeholder="https://..." /></label>
+              <label>Upload scholarship logo
+                <input className="portal-input" type="file" accept="image/*" onChange={(e) => readImageFile(e.target.files?.[0], (image) => setPost({ ...post, logo: image }))} />
+              </label>
+            </div>
+            {post.logo && <img className="portal-upload-preview portal-logo-preview" src={post.logo} alt="Scholarship logo preview" />}
+            <label>Upload application form
+              <input className="portal-input" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" onChange={(e) => readDocumentFile(e.target.files?.[0], (url, name) => setPost({ ...post, applicationFormUrl: url, applyLink: url, applicationFormName: name }))} />
+              {post.applicationFormName && <small>{post.applicationFormName}</small>}
+            </label>
+            <label>Details / eligibility criteria<textarea className="portal-input" rows="5" value={post.details || ""} onChange={(e) => setPost({ ...post, details: e.target.value })} required /></label>
+            <label>Documents required<textarea className="portal-input" rows="5" value={post.documentsRequired || ""} onChange={(e) => setPost({ ...post, documentsRequired: e.target.value })} required /></label>
+            <div className="portal-selected-box">
+              <strong>SFAO handling note</strong>
+              <p>Scholarship cards will tell students to contact the SFAO office at the Admin Building with complete documents and the filled application form.</p>
+            </div>
+          </>
+        )}
+        {isEvent && (
+          <div className="portal-form-grid">
+            <label>Location<input className="portal-input" value={post.location} onChange={(e) => setPost({ ...post, location: e.target.value })} placeholder="Software Department" required /></label>
+            <label>Date<input className="portal-input" value={post.date} onChange={(e) => setPost({ ...post, date: e.target.value })} placeholder="27-07-2026" required /></label>
+            <label>Time<input className="portal-input" value={post.time} onChange={(e) => setPost({ ...post, time: e.target.value })} placeholder="10am to 2pm" required /></label>
+            <label>Duration<input className="portal-input" value={post.duration} onChange={(e) => setPost({ ...post, duration: e.target.value })} placeholder="3 days" required /></label>
+          </div>
+        )}
         <label>Card image
           <input className="portal-input" type="file" accept="image/*" onChange={(e) => readImageFile(e.target.files?.[0], (image) => setPost({ ...post, image }))} />
         </label>
@@ -692,7 +1190,10 @@ function PublishingPanel({ onChange }) {
             <label key={type}><input type="checkbox" checked={post.audience.includes(type)} onChange={() => toggleAudience(type)} /> {type}</label>
           ))}
         </div>
-        <button className="portal-primary" type="submit">Publish</button>
+        <div className="portal-report-actions">
+          <button className="portal-primary" type="submit">{post.id ? "Update Post" : "Publish"}</button>
+          {post.id && <button className="portal-secondary" type="button" onClick={() => setPost(initialPost)}>Cancel Edit</button>}
+        </div>
       </form>
       <div className="portal-panel portal-feature-flags">
         <h3>Enable Coming-Soon Modules</h3>
@@ -703,8 +1204,153 @@ function PublishingPanel({ onChange }) {
           </label>
         ))}
       </div>
+      <div className="portal-panel portal-mt">
+        <h3>Published Items</h3>
+        <div className="portal-table-wrap portal-mt">
+          <table className="portal-table">
+            <thead><tr><th>Title</th><th>Type</th><th>Audience</th><th>Deadline / Event</th><th>Interested</th><th>Action</th></tr></thead>
+            <tbody>
+              {published.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.title}<small>{item.body}</small></td>
+                  <td>{item.type}</td>
+                  <td>{item.audience?.join(", ")}</td>
+                  <td>{EVENT_TYPES.includes(item.type) ? `${item.location || item.meta || "TBA"} - ${item.date || "TBA"}` : item.deadline || extractDeadline(item.meta) || item.meta || "TBA"}</td>
+                  <td>{EVENT_TYPES.includes(item.type) ? Number(item.interestedCount || 0) : "-"}</td>
+                  <td><button className="portal-mini" onClick={() => editPost(item)}>Edit</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
+}
+
+function FormsAdminPanel({ onChange }) {
+  const forms = getForms();
+  const [selectedId, setSelectedId] = useState(forms[0]?.id || "");
+  const selectedForm = forms.find((form) => form.id === selectedId) || forms[0];
+  const [draft, setDraft] = useState(() => cloneFormDraft(selectedForm));
+
+  function loadForm(id) {
+    const form = forms.find((item) => item.id === id);
+    setSelectedId(id);
+    setDraft(cloneFormDraft(form));
+  }
+
+  function updateDraftField(index, key, value) {
+    setDraft((current) => ({
+      ...current,
+      fields: current.fields.map((field, fieldIndex) => fieldIndex === index ? { ...field, [key]: value } : field),
+    }));
+  }
+
+  function addField() {
+    setDraft((current) => ({
+      ...current,
+      fields: [...current.fields, { key: `field${current.fields.length + 1}`, label: "New Field", type: "text", required: false }],
+    }));
+  }
+
+  function removeField(index) {
+    setDraft((current) => ({
+      ...current,
+      fields: current.fields.filter((_, fieldIndex) => fieldIndex !== index),
+    }));
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    const normalizedFields = draft.fields.map((field) => ({
+      ...field,
+      key: normalizeFieldKey(field.key || field.label),
+      options: ["select", "radio"].includes(field.type)
+        ? String(field.optionsText || field.options?.join(",") || "").split(",").map((item) => item.trim()).filter(Boolean)
+        : undefined,
+      optionsText: undefined,
+    }));
+    saveForm({ ...draft, id: draft.id || `form-${Date.now()}`, fields: normalizedFields });
+    toast.success("Form saved.");
+    onChange();
+  }
+
+  return (
+    <div className="portal-page">
+      <FeatureHeader feature={{ label: "Create Forms", description: "Build reusable application forms and attach them to internships, workshops, bootcamps, visits, grants, and collaboration posts." }} />
+      <div className="portal-dashboard-grid">
+        <section>
+          <form className="portal-form-card" onSubmit={submit}>
+            <div className="portal-form-grid">
+              <label>Start from saved form<select className="portal-input" value={selectedId} onChange={(e) => loadForm(e.target.value)}>
+                {forms.map((form) => <option key={form.id} value={form.id}>{form.name}</option>)}
+              </select></label>
+              <label>Form name<input className="portal-input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required /></label>
+            </div>
+            <label>Description<textarea className="portal-input" rows="3" value={draft.description || ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></label>
+            <div className="portal-form-builder">
+              <div className="portal-panel__header">
+                <h3>Fields</h3>
+                <button type="button" className="portal-mini" onClick={addField}>Add Field</button>
+              </div>
+              {draft.fields.map((field, index) => (
+                <div className="portal-form-builder__row" key={`${field.key}-${index}`}>
+                  <input className="portal-input" value={field.label} onChange={(e) => updateDraftField(index, "label", e.target.value)} placeholder="Field label" />
+                  <select className="portal-input" value={field.type} onChange={(e) => updateDraftField(index, "type", e.target.value)}>
+                    <option value="text">Text</option>
+                    <option value="email">Email</option>
+                    <option value="tel">Phone</option>
+                    <option value="url">URL</option>
+                    <option value="number">Number</option>
+                    <option value="date">Date</option>
+                    <option value="textarea">Textarea</option>
+                    <option value="select">Select</option>
+                    <option value="radio">Radio</option>
+                    <option value="rating">1-5 Rating</option>
+                    <option value="checkbox">Checkbox</option>
+                    <option value="file">File Upload</option>
+                  </select>
+                  <input className="portal-input" value={field.optionsText || field.options?.join(", ") || ""} disabled={!["select", "radio"].includes(field.type)} onChange={(e) => updateDraftField(index, "optionsText", e.target.value)} placeholder="Options comma separated" />
+                  <label className="portal-inline-check"><input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateDraftField(index, "required", e.target.checked)} /> Required</label>
+                  <button type="button" className="portal-mini portal-mini--red" onClick={() => removeField(index)}>Remove</button>
+                </div>
+              ))}
+            </div>
+            <button className="portal-primary" type="submit"><Save size={16} /> Save Form</button>
+          </form>
+        </section>
+        <aside className="portal-aside">
+          <div className="portal-panel">
+            <div className="portal-panel__header"><h3>Saved Forms</h3><span>{forms.length}</span></div>
+            <div className="portal-list">
+              {forms.map((form) => (
+                <article key={form.id}>
+                  <strong>{form.name}</strong>
+                  <p>{form.description}</p>
+                  <small>{form.fields.length} fields</small>
+                </article>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function cloneFormDraft(form) {
+  return {
+    id: form?.id || "",
+    name: form?.name || "Custom Form",
+    description: form?.description || "",
+    fields: (form?.fields || []).map((field) => ({ ...field, optionsText: field.options?.join(", ") || "" })),
+  };
+}
+
+function normalizeFieldKey(value = "") {
+  const key = String(value).trim().replace(/[^a-zA-Z0-9]+(.)/g, (_, char) => char.toUpperCase()).replace(/[^a-zA-Z0-9]/g, "");
+  return key ? key.charAt(0).toLowerCase() + key.slice(1) : `field${Date.now()}`;
 }
 
 function SiteUpdatesPanel() {
@@ -743,19 +1389,64 @@ function ResourceAdminPanel() {
 }
 
 function FeedbackAdminPanel() {
+  const forms = getForms();
+  const assignments = getFeedbackFormAssignments();
+  const [draft, setDraft] = useState(assignments);
+  const feedbackSubmissions = getSubmissions().filter((submission) => submission.featureKey === "feedback");
+  const feedbackPortals = [
+    PORTAL_TYPES.UNDERGRADUATE,
+    PORTAL_TYPES.POSTGRADUATE,
+    PORTAL_TYPES.FACULTY,
+    PORTAL_TYPES.INDUSTRY,
+    PORTAL_TYPES.STARTUP,
+  ];
+
+  function submit(event) {
+    event.preventDefault();
+    saveFeedbackFormAssignments(draft);
+    toast.success("Feedback form assignments saved.");
+  }
+
   return (
     <div className="portal-page">
       <FeatureHeader feature={{ label: "Feedback", description: "Create feedback forms for selected portals and review submitted responses." }} />
-      <form className="portal-form-card" onSubmit={(event) => { event.preventDefault(); toast.success("Feedback form created."); }}>
+      <form className="portal-form-card" onSubmit={submit}>
+        <p className="portal-form-note">Edit the default feedback form in Create Forms, or create a new form there and assign it below.</p>
         <div className="portal-form-grid">
-          <label>Form title<input className="portal-input" required /></label>
-          <label>Question type<select className="portal-input"><option>Rating + comments</option><option>Text response</option><option>Multiple choice</option></select></label>
+          {feedbackPortals.map((portalType) => (
+            <label key={portalType}>
+              {PORTAL_CONFIG[portalType].shortTitle} feedback form
+              <select className="portal-input" value={draft[portalType] || "feedback-form"} onChange={(event) => setDraft({ ...draft, [portalType]: event.target.value })}>
+                {forms.map((form) => <option key={form.id} value={form.id}>{form.name}</option>)}
+              </select>
+            </label>
+          ))}
         </div>
-        <label>Question<textarea className="portal-input" rows="3" required /></label>
-        <PortalAudiencePicker />
-        <button className="portal-primary" type="submit"><Save size={16} /> Create Form</button>
+        <button className="portal-primary" type="submit"><Save size={16} /> Save Feedback Forms</button>
       </form>
-      <div className="portal-panel portal-mt"><h3>Recent Responses</h3><p className="portal-empty">Responses will appear here after users submit assigned forms.</p></div>
+      <div className="portal-panel portal-mt">
+        <div className="portal-panel__header"><h3>Recent Responses</h3><span>{feedbackSubmissions.length}</span></div>
+        {feedbackSubmissions.length === 0 ? (
+          <p className="portal-empty">Responses will appear here after users submit assigned forms.</p>
+        ) : (
+          <div className="portal-table-wrap portal-mt">
+            <table className="portal-table">
+              <thead><tr><th>User</th><th>Portal</th><th>Form</th><th>Submitted</th><th>Response</th></tr></thead>
+              <tbody>
+                {feedbackSubmissions.map((submission) => (
+                  <tr key={submission.id}>
+                    <td>{submission.actorName}<small>{submission.actorEmail}</small></td>
+                    <td>{PORTAL_CONFIG[submission.portalType]?.shortTitle || submission.portalType}</td>
+                    <td>{submission.formName || "Feedback Form"}</td>
+                    <td>{new Date(submission.createdAt).toLocaleString()}</td>
+                    <td><FeedbackAnswerSummary answers={submission.formAnswers} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -805,21 +1496,80 @@ function SponsorResearch({ user, onChange }) {
 }
 
 function FeedbackUser({ user, onChange }) {
+  const formTemplate = getFeedbackFormForPortal(user.portalType);
+  const [answers, setAnswers] = useState(() => getInitialFormAnswers(formTemplate, { title: "Portal Feedback" }, user));
+
+  function updateAnswer(key, value) {
+    setAnswers((current) => ({ ...current, [key]: value }));
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    saveSubmission({
+      title: "Portal feedback",
+      summary: `${formTemplate.name} submitted`,
+      details: JSON.stringify(answers),
+      featureKey: "feedback",
+      portalType: user.portalType,
+      actorId: user.id,
+      actorName: user.name,
+      actorEmail: user.email || user.username || "",
+      formId: formTemplate.id,
+      formName: formTemplate.name,
+      formAnswers: answers,
+    });
+    toast.success("Feedback submitted.");
+    setAnswers(getInitialFormAnswers(formTemplate, { title: "Portal Feedback" }, user));
+    onChange();
+  }
+
   return (
     <div className="portal-page">
       <FeatureHeader feature={{ label: "Feedback", description: "Submit general feedback or respond to feedback forms assigned to your portal." }} />
-      <form className="portal-form-card" onSubmit={(event) => {
-        event.preventDefault();
-        saveSubmission({ title: "General feedback", summary: event.currentTarget.rating.value, details: event.currentTarget.comments.value, featureKey: "feedback", portalType: user.portalType, actorId: user.id, actorName: user.name });
-        toast.success("Feedback submitted.");
-        onChange();
-      }}>
-        <label>Rating<select name="rating" className="portal-input"><option>Excellent</option><option>Good</option><option>Needs improvement</option></select></label>
-        <label>Comments<textarea name="comments" className="portal-input" rows="5" required /></label>
+      <form className="portal-form-card" onSubmit={submit}>
+        <p className="portal-form-note">{formTemplate.name}</p>
+        <div className="portal-modal-form-grid">
+          {formTemplate.fields.map((field) => (
+            <DynamicFormField
+              field={field}
+              value={answers[field.key]}
+              onChange={(value) => updateAnswer(field.key, value)}
+              key={field.key}
+            />
+          ))}
+        </div>
         <button className="portal-primary" type="submit"><Send size={16} /> Submit Feedback</button>
       </form>
     </div>
   );
+}
+
+function getFeedbackFormForPortal(portalType) {
+  const forms = getForms();
+  const assignments = getFeedbackFormAssignments();
+  const formId = assignments[portalType] || "feedback-form";
+  return forms.find((form) => form.id === formId) || forms.find((form) => form.id === "feedback-form") || forms[0] || { id: "feedback-form", name: "Feedback Form", fields: [] };
+}
+
+function FeedbackAnswerSummary({ answers = {} }) {
+  const entries = Object.entries(answers).filter(([, value]) => value !== "" && value !== undefined && value !== null);
+  if (!entries.length) return <span className="portal-empty">No response data.</span>;
+  return (
+    <div className="portal-answer-summary">
+      {entries.slice(0, 6).map(([key, value]) => (
+        <span key={key}><strong>{toTitleLabel(key)}:</strong> {String(value)}</span>
+      ))}
+      {entries.length > 6 && <small>+{entries.length - 6} more fields</small>}
+    </div>
+  );
+}
+
+function toTitleLabel(value = "") {
+  return String(value)
+    .replace(/([A-Z])/g, " $1")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
 }
 
 function ResourceLibrary({ embedded = false }) {
@@ -830,7 +1580,7 @@ function ResourceLibrary({ embedded = false }) {
         {getPosts().filter((post) => post.type === "Resource").map((post) => (
           <article key={post.id}>
             <div><strong>{post.title}</strong><p>{post.body}</p><small>{post.meta}</small></div>
-            <button className="portal-secondary"><Download size={15} /> Download</button>
+            <a className="portal-secondary" href={post.applyLink || "#"} download><Download size={15} /> Download</a>
           </article>
         ))}
       </div>
@@ -1064,7 +1814,9 @@ function AnalyticsPanel() {
   const users = getPagedUsers(1, "").total;
   const submissions = getSubmissions();
   const listings = getListings();
-  const stats = [
+  const overrides = getAnalyticsOverrides();
+  const [, forceRender] = useState(0);
+  const baseStats = [
     ["Students onboarded", getPagedUsers(1, "student").total],
     ["Industry partners onboarded", getPagedUsers(1, "industry").total + 1],
     ["Faculty & researchers onboarded", getPagedUsers(1, "faculty").total],
@@ -1074,6 +1826,15 @@ function AnalyticsPanel() {
     ["FYPs listed", listings.filter((item) => item.kind === "FYP").length],
     ["Total users", users],
   ];
+  const stats = baseStats.map(([label, value]) => [label, overrides[label] || value]);
+
+  function saveMetric(event, label) {
+    event.preventDefault();
+    const value = event.currentTarget.metricValue.value;
+    saveAnalyticsOverrides({ ...overrides, [label]: value });
+    toast.success("KPI saved.");
+    forceRender((current) => current + 1);
+  }
 
   return (
     <div className="portal-page">
@@ -1085,7 +1846,17 @@ function AnalyticsPanel() {
           </div>
         ))}
       </div>
-      <div className="portal-panel"><h3>KPI Controls</h3><p>Edit display overrides or keep actual tracked counts. Actual tracking remains the default.</p></div>
+      <div className="portal-panel portal-mt">
+        <h3>KPI Controls</h3>
+        <div className="portal-kpi-editor">
+          {baseStats.map(([label, value]) => (
+            <form key={label} onSubmit={(event) => saveMetric(event, label)}>
+              <label>{label}<input className="portal-input" name="metricValue" defaultValue={overrides[label] || value} /></label>
+              <button className="portal-mini" type="submit">Save</button>
+            </form>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

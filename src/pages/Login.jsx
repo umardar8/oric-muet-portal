@@ -84,7 +84,7 @@ export default function Login() {
               <input
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
-                placeholder="23sw@students.muet.edu.pk or oric.admin"
+                placeholder="enter your official university email"
                 className="portal-input"
               />
             </label>
@@ -106,6 +106,7 @@ export default function Login() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   type={showPassword ? "text" : "password"}
+                  placeholder="enter password"
                   className="portal-input pr-10"
                 />
                 <button type="button" className="absolute right-3 top-3 text-slate-500" onClick={() => setShowPassword((value) => !value)}>
@@ -114,7 +115,7 @@ export default function Login() {
               </div>
             </label>
 
-            <button type="submit" disabled={!identifier || !password || isLoading} className="portal-primary w-full disabled:cursor-not-allowed disabled:bg-slate-300">
+            <button type="submit" disabled={!identifier || !password || isLoading} className="portal-primary w-full bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300">
               {isLoading ? "Signing in..." : "Sign In"} <ArrowRight size={16} />
             </button>
           </div>

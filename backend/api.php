@@ -16,6 +16,44 @@ try {
         json_response(['success' => true, 'message' => 'ORIC Portal API is running.']);
     }
 
+    if ($method === 'GET' && $resource === 'state') {
+        $key = $_GET['key'] ?? ($segments[1] ?? null);
+        if ($key) {
+            $stmt = db()->prepare('SELECT state_json FROM portal_state WHERE state_key = ?');
+            $stmt->execute([$key]);
+            $row = $stmt->fetch();
+            json_response([
+                'success' => true,
+                'key' => $key,
+                'value' => $row ? json_decode((string) $row['state_json'], true) : null,
+            ]);
+        }
+
+        $rows = db()->query('SELECT state_key, state_json FROM portal_state')->fetchAll();
+        $state = [];
+        foreach ($rows as $row) {
+            $state[$row['state_key']] = json_decode((string) $row['state_json'], true);
+        }
+        json_response(['success' => true, 'state' => $state]);
+    }
+
+    if (($method === 'POST' || $method === 'PUT') && $resource === 'state') {
+        $data = request_json();
+        require_fields($data, ['key']);
+
+        $stmt = db()->prepare(
+            'INSERT INTO portal_state (state_key, state_json)
+             VALUES (:state_key, :state_json)
+             ON DUPLICATE KEY UPDATE state_json = VALUES(state_json), updated_at = CURRENT_TIMESTAMP'
+        );
+        $stmt->execute([
+            ':state_key' => $data['key'],
+            ':state_json' => json_encode($data['value'] ?? null, JSON_UNESCAPED_SLASHES),
+        ]);
+
+        json_response(['success' => true]);
+    }
+
     if ($method === 'POST' && $resource === 'register') {
         $data = request_json();
         require_fields($data, ['name', 'email', 'password', 'portal_type']);
